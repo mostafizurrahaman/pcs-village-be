@@ -1,12 +1,12 @@
 import { Document, Model } from 'mongoose'
-import type { TAuthRole, TAuthStatus } from './user.constant'
+import type { TAuthProvider, TAuthRole, TAuthStatus } from './user.constant'
 
 export interface IUser extends Document {
   name: string
   email: string
   password: string
   status: TAuthStatus
-  authProvider: 
+  authProvider: TAuthProvider
 
   // roles:
   role: TAuthRole

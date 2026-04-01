@@ -1,4 +1,5 @@
 import { authRoutes } from '@app/modules/Auth/user.routes'
+import { branchRoutes } from '@app/modules/Branch/branch.route'
 import express, { Router } from 'express'
 
 const router: Router = express.Router()
@@ -7,6 +8,10 @@ const routes = [
   {
     path: '/auth',
     route: authRoutes,
+  },
+  {
+    path: '/branches',
+    route: branchRoutes,
   },
 ]
 
