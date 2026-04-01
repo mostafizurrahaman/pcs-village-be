@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    // Module System
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ESNext",
+
+    // Type Checking
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Module Features
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+
+    // Output Settings
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    // Project Settings
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleDetection": "force",
+    "noUncheckedSideEffectImports": true,
+
+    // Path Mapping
+    "baseUrl": ".",
+    "paths": {
+      "@repo/*": ["packages/*/src"]
+    },
+
+    // Node.js Types
+    // "types": ["node"],
+    "lib": ["ESNext"]
+  }
+}

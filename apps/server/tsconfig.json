@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "typeRoots": ["./src/app/interfaces"],
+
+    "jsx": "react-jsx",
+    "paths": {
+      "@app/*": ["apps/server/src/app/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/app/interfaces/express/index.d.ts"],
+  "exclude": ["node_modules", "dist", "**/*.js", "**/*.js.map", "**/*.d.ts", "**/*.d.ts.map"]
+}

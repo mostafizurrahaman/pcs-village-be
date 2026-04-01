@@ -1,0 +1,43 @@
+# --- Dependencies ---
+node_modules/
+.pnpm-debug.log*
+
+# --- Environment Variables (Crucial for Security) ---
+# This ignores .env files in the root and inside all subfolders
+.env
+.env.*
+!.env.example
+
+# --- Turborepo & Build Outputs ---
+.turbo/
+dist/
+build/
+*.tsbuildinfo
+
+# --- MongoDB Specific ---
+# If you ever run MongoDB locally and store data in the project
+data/db/
+*.log
+mongodb.log
+mongod.lock
+
+# --- OS & IDE Files ---
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# --- Logs ---
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Testing ---
+coverage/
+.nyc_output
