@@ -18,38 +18,77 @@ const createBranch = async (data: ICreateBranchPayload) => {
     throw new AppError(httpStatus.CONFLICT, 'Branch with this name already exists')
   }
 
-  const branch = await Branch.create(data)
+  const branch = await Branch.create({
+    name: data.name,
+    slug,
+  })
 
   return branch
 }
 
 // 2. Update Branch api:
 const updateBranch = async (id: string, data: Partial<ICreateBranchPayload>) => {
-  const slug = slugify(data.name as string)
-
-  // Check is there any already exists?:
-  const existingBranch = await Branch.findOne({
-    slug,
-  })
-
+  // 1. Check if branch exists
+  const existingBranch = await Branch.findById(id)
   if (!existingBranch) {
     throw new AppError(httpStatus.NOT_FOUND, 'Branch not found')
   }
 
-  if (existingBranch && existingBranch._id.toString() !== id) {
-    throw new AppError(httpStatus.CONFLICT, 'Branch with this name already exists')
+  // 2. If no data provided
+  if (!data || Object.keys(data).length === 0) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'No update data provided')
   }
 
-  if (slug !== existingBranch?.slug) {
-    existingBranch.slug = slug
+  // 3. Handle name update
+  if (data.name) {
+    const normalizedName = data.name.toLowerCase().trim()
+
+    // 4. Skip if same name (avoid unnecessary DB queries)
+    if (normalizedName === existingBranch.name) {
+      return existingBranch
+    }
+
+    // 5. Check duplicate name
+    const duplicateBranch = await Branch.findOne({
+      name: normalizedName,
+      _id: { $ne: id },
+    })
+
+    if (duplicateBranch) {
+      throw new AppError(httpStatus.CONFLICT, 'Branch with this name already exists')
+    }
+
+    // 6. Generate slug
+    const newSlug = slugify(normalizedName)
+
+    // 7. Check duplicate slug
+    const duplicateSlug = await Branch.findOne({
+      slug: newSlug,
+      _id: { $ne: id },
+    })
+
+    if (duplicateSlug) {
+      throw new AppError(httpStatus.CONFLICT, 'Slug already exists')
+    }
+
+    // 8. Update values
+    existingBranch.name = normalizedName
+    existingBranch.slug = newSlug
   }
 
-  existingBranch.name = data.name as string
-  existingBranch.save()
+  // 9. Save with duplicate error handling
+  try {
+    await existingBranch.save()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    if (error.code === 11000) {
+      throw new AppError(httpStatus.CONFLICT, 'Duplicate field value')
+    }
+    throw error
+  }
 
   return existingBranch
 }
-
 // 3. get branch by id:
 const getBranchById = async (id: string) => {
   const branch = await Branch.findById(id)
