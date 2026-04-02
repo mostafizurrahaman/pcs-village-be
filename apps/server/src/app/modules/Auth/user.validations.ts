@@ -1,4 +1,5 @@
-import { requiredEmail, requiredString } from '@repo/shared'
+import { enumString, optionalString, requiredEmail, requiredString } from '@repo/shared'
+import { AffiliationValues, KidsAgeRangeValues } from 'packages/db/src'
 import z from 'zod/v4'
 
 // 1. Signup
@@ -9,6 +10,15 @@ const signUserSchema = z.object({
     password: requiredString('Password').min(1, {
       error: `Password is required`,
     }),
+
+    // ** Profile fields:
+    branch: requiredString('Branch'),
+    affiliation: enumString(AffiliationValues, 'Affiliation'),
+    interestTags: z.array(z.string()).optional(),
+    kidsAgeRanges: z.array(enumString(KidsAgeRangeValues, 'kidsAgeRanges')).optional(),
+    currentStation: requiredString('Current Station'),
+    futureStation: optionalString('Future Station'),
+    estimatedPcsDate: optionalString('Estimated PCS Date'),
   }),
 })
 
@@ -84,8 +94,6 @@ export const AuthValidations = {
   changedPasswordSchema,
   resetPasswordSchema,
 }
-
-
 
 export type ISignUpSchemaType = z.infer<typeof signUserSchema.shape.body>
 export type ILoginType = z.infer<typeof loginSchema.shape.body>

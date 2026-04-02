@@ -1,5 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AuthRoles, AuthStatus, Otp, otpTypes, User, type IUser } from '@repo/db'
+import {
+  AuthRoles,
+  AuthStatus,
+  Branch,
+  DutyStation,
+  Otp,
+  otpTypes,
+  User,
+  UserProfile,
+  type IUser,
+  type TKidsAgeRange,
+} from '@repo/db'
 import type {
   IChangedPasswordType,
   IForgotPasswordType,
@@ -16,6 +27,7 @@ import {
   comparePassword,
   createToken,
   generateOtp,
+  GLOBAL_MESSAGES,
   hashPassword,
   verifyToken,
   type IJwtUserPayload,
@@ -26,10 +38,24 @@ import configs from '@app/configs'
 import mongoose from 'mongoose'
 import { renderEmail, ResetPasswordOTPEmail, SignupOTPEmail } from '@repo/email-templates'
 import { sendEmail } from '@repo/email-sender'
+import { uploadSingleFileToS3 } from 'packages/media-hub/src'
 
 // 1. Signup
-const signUp = async (payload: ISignUpSchemaType) => {
-  const { name, email, password } = payload
+const signUp = async (payload: ISignUpSchemaType, profileImage?: Express.Multer.File) => {
+  const {
+    name,
+    email,
+    password,
+
+    // profile fields:
+    branch,
+    affiliation,
+    interestTags,
+    kidsAgeRanges,
+    currentStation,
+    futureStation,
+    estimatedPcsDate,
+  } = payload
 
   // 1. Check existing user
   const existingUser = (await User.isUserExistByEmail(email)) as IUser
@@ -65,10 +91,34 @@ const signUp = async (payload: ISignUpSchemaType) => {
     }
   }
 
+  // 2. Check is the branch exists:
+  const existingBranch = await Branch.findById(branch)
+  if (!existingBranch) {
+    throw new AppError(httpStatus.BAD_REQUEST, GLOBAL_MESSAGES.BRANCH_NOT_FOUND)
+  }
+
+  // 2. Check is station exists?:
+  const currentStationExists = await DutyStation.findById(currentStation)
+  if (!currentStationExists) {
+    throw new AppError(httpStatus.NOT_FOUND, `Current duty station doesn't exits!`)
+  }
+
+  if (futureStation) {
+    const futureStationExists = await DutyStation.findById(futureStation)
+    if (!futureStationExists) {
+      throw new AppError(httpStatus.NOT_FOUND, `Future duty station doesn't exits!`)
+    }
+  }
+
+  // If has profile picture the upload and get the url:
   const session = await mongoose.startSession()
 
   try {
     session.startTransaction()
+
+    const uploadedImage = profileImage
+      ? await uploadSingleFileToS3(profileImage, 'profiles')
+      : undefined
 
     // 2. Hash password
     const hashedPassword = await hashPassword(password, configs.passwordSoltRound)
@@ -82,10 +132,25 @@ const signUp = async (payload: ISignUpSchemaType) => {
           password: hashedPassword,
           status: AuthStatus.PENDING,
           role: AuthRoles.USER,
+          profileImage: uploadedImage?.url as string,
         },
       ],
       { session }
     )
+
+    // Create User Profile :
+    const profilePayload = {
+      user: newUser?._id?.toString() as string,
+      branch: existingBranch._id?.toString(),
+      affiliation,
+      interestTags: interestTags as string[],
+      kidsAgeRanges: kidsAgeRanges as TKidsAgeRange[],
+      currentStation,
+      ...(futureStation && { futureStation }),
+      ...(estimatedPcsDate && { estimatedPcsDate }),
+    }
+
+    await UserProfile.create([profilePayload], { session })
 
     if (!newUser?._id) {
       throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed!')
@@ -657,7 +722,6 @@ const changedPassword = async (userInfo: IJwtUserPayload, payload: IChangedPassw
     }
   )
 }
-
 
 export const AuthServices = {
   signUp,

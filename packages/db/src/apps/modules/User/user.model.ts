@@ -24,9 +24,10 @@ const userSchema = new Schema<IUser, IUserModel>(
       default: AuthStatus.PENDING,
     },
 
-    //  Auth Provider : 
-    authProvider : { 
-
+    //  Auth Provider :
+    authProvider: {
+      type: String,
+      enum: ['google', 'email', 'apple'],
     },
 
     // roles:
@@ -68,8 +69,6 @@ const userSchema = new Schema<IUser, IUserModel>(
       type: String,
     },
 
-  
-
     // blocked at:
     blockedAt: {
       type: Date,
@@ -81,7 +80,6 @@ const userSchema = new Schema<IUser, IUserModel>(
       type: Date,
     },
   },
-
   {
     timestamps: true,
     versionKey: false,

@@ -5,7 +5,8 @@ import configs from '@app/configs'
 
 // 1. Sign up
 const signUp = catchAsync(async (req, res) => {
-  const result = await AuthServices.signUp(req.body)
+  const profileImage = req.file as Express.Multer.File
+  const result = await AuthServices.signUp(req.body, profileImage)
 
   sendResponse(res, {
     success: true,
@@ -123,10 +124,6 @@ const changedPassword = catchAsync(async (req, res) => {
     data: null,
   })
 })
-
-
-
-
 
 export const AuthController = {
   signUp,

@@ -3,6 +3,7 @@ import { Server } from 'http'
 import configs from './app/configs'
 import app from './app'
 import { logger } from '@app/libs/logger'
+import { seedSuperAdmin } from '@app/libs/seed-super-admin'
 
 let server: Server
 //  boostrap function :
@@ -11,6 +12,8 @@ const boostrap = async () => {
     await connectDB(configs.databaseUrl)
 
     logger.info('✅ Database connected  successfully!')
+
+    await seedSuperAdmin()
     // server listen :
     server = app.listen(configs.port, () => {
       logger.info(`🧑‍🚀🚀 Server is running on ${configs.port}`)
