@@ -1,6 +1,6 @@
 import type { Types } from 'mongoose'
 
-export interface ICommunityComments {
+export interface ICommunityComment {
   author: Types.ObjectId
   post: Types.ObjectId
   parent: Types.ObjectId

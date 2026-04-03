@@ -1,7 +1,8 @@
 import { model, Schema } from 'mongoose'
 import type { ICommunityPost } from '../CommunityPosts'
+import type { ICommunityComment } from './community-comments.interface'
 
-const CommunityCommentSchema = new Schema<ICommunityPost>(
+const CommunityCommentSchema = new Schema<ICommunityComment>(
   {
     author: {
       type: Schema.Types.ObjectId,
