@@ -125,6 +125,18 @@ const changedPassword = catchAsync(async (req, res) => {
   })
 })
 
+// 10. Changed password:
+const getMe = catchAsync(async (req, res) => {
+  const result = await AuthServices.getMe(req.user)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: `You profile retived successfully!`,
+    data: result,
+  })
+})
+
 export const AuthController = {
   signUp,
   resendSignupOTP,
@@ -135,4 +147,5 @@ export const AuthController = {
   resendOTP,
   resetPassword,
   changedPassword,
+  getMe,
 }

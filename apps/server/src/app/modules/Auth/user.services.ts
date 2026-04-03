@@ -35,7 +35,7 @@ import {
 // import { sendEmail } from '@repo/email-sender'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
-import mongoose from 'mongoose'
+import mongoose, { Types } from 'mongoose'
 import { renderEmail, ResetPasswordOTPEmail, SignupOTPEmail } from '@repo/email-templates'
 import { sendEmail } from '@repo/email-sender'
 import { uploadSingleFileToS3 } from 'packages/media-hub/src'
@@ -723,6 +723,91 @@ const changedPassword = async (userInfo: IJwtUserPayload, payload: IChangedPassw
   )
 }
 
+// 10. Get me:
+const getMe = async (user: IUser) => {
+  // check is the user exists?:
+
+  const me = await User.aggregate([
+    {
+      $match: {
+        _id: new Types.ObjectId(user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: 'userprofiles',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'profile',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'dutystations',
+              localField: 'currentStation',
+              foreignField: '_id',
+              as: 'currentStationDetails',
+            },
+          },
+          {
+            $lookup: {
+              from: 'dutystations',
+              localField: 'futureStation',
+              foreignField: '_id',
+              as: 'futureStationDetails',
+            },
+          },
+          {
+            $lookup: {
+              from: 'branches',
+              localField: 'branch',
+              foreignField: '_id',
+              as: 'branchDetails',
+            },
+          },
+          {
+            $unwind: { path: '$futureStationDetails', preserveNullAndEmptyArrays: true },
+          },
+          {
+            $unwind: { path: '$currentStationDetails', preserveNullAndEmptyArrays: true },
+          },
+          {
+            $unwind: { path: '$branchDetails', preserveNullAndEmptyArrays: true },
+          },
+        ],
+      },
+    },
+
+    {
+      $unwind: '$profile',
+    },
+
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        status: 1,
+        role: 1,
+        isTwoFactorEnabled: 1,
+        twoFactorBackupCodes: 1,
+        isOtpVerified: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        passwordChangedAt: 1,
+        branch: '$profile.branchDetails',
+        affiliation: '$profile.affiliation',
+        interestTags: '$profile.interestTags',
+        kidsAgeRanges: '$profile.kidsAgeRanges',
+        estimatedPcsDate: '$profile.estimatedPcsDate',
+        futureStation: '$profile.futureStationDetails',
+        currentStation: '$profile.currentStationDetails',
+      },
+    },
+  ])
+
+  return me[0]
+}
+
 export const AuthServices = {
   signUp,
   resendSignupOTP,
@@ -733,4 +818,5 @@ export const AuthServices = {
   resendOTP,
   resetPassword,
   changedPassword,
+  getMe,
 }

@@ -145,4 +145,27 @@ userSchema.statics.isJwtIssuedBeforePasswordChanged = function (
   return jwtIssuedTime < passwordChangedAt.getTime()
 }
 
+// 10. Aggregration middleware
+userSchema.pre('aggregate', function () {
+  this.pipeline().push({
+    $project: { password: 0, twoFactorBackupCodes: 0 },
+  })
+})
+
+// 11. findOne middleware :
+userSchema.pre('findOne', function (doc) {
+  if (doc) {
+    delete doc.password
+    delete doc.twoFactorBackupCodes
+  }
+})
+
+// 11. findOne middleware :
+userSchema.pre('find', function (doc) {
+  if (doc) {
+    delete doc.password
+    delete doc.twoFactorBackupCodes
+  }
+})
+
 export const User = model<IUser, IUserModel>('User', userSchema)
