@@ -16,7 +16,7 @@ router.post(
   multerFactory({
     category: 'image',
     maxSizeInMB: 5,
-  }).array('attachment', 5),
+  }).array('attachments', 5),
   validateRequest(communityPostValidations.createCommunityPost),
   communityPostControllers.createCommunityPost
 )
@@ -36,7 +36,7 @@ router.patch(
   multerFactory({
     category: 'image',
     maxSizeInMB: 5,
-  }).array('attachment', 5),
+  }).array('attachments', 5),
   validateRequest(communityPostValidations.updateCommunityPost),
   communityPostControllers.updateCommunityPost
 )
@@ -56,3 +56,5 @@ router.get(
   validateRequest(communityPostValidations.deleteCommunityPostById),
   communityPostControllers.deleteCommunityPostById
 )
+
+export const communityPostRoutes = router
