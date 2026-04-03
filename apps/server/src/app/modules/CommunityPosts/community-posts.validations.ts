@@ -28,11 +28,21 @@ const deleteCommunityPostById = z.object({
   }),
 })
 
-export const communityValidations = {
+const deleteCommunityPostAttachmentById = z.object({
+  params: z.object({
+    id: requiredString('Post ID'),
+  }),
+  body: z.object({
+    url: requiredString('URL'),
+  }),
+})
+
+export const communityPostValidations = {
   createCommunityPost,
   updateCommunityPost,
   getCommunityPostById,
   deleteCommunityPostById,
+  deleteCommunityPostAttachmentById,
 }
 
 // 1. Create Community Payload interfaces :

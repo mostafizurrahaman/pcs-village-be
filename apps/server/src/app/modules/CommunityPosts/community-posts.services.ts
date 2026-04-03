@@ -209,7 +209,7 @@ const deletePostById = async (user: IUser, postId: string) => {
   }
 }
 
-export const communityServices = {
+export const communityPostServices = {
   createCommunityPost,
   deletePostAttachment,
   updateCommunityPost,
