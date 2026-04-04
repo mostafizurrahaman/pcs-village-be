@@ -5,8 +5,11 @@ import {
   PostLike,
   UserProfile,
   type IUser,
-} from 'packages/db/src'
-import type { TCreateCommunityPayload } from './community-posts.validations'
+} from '@repo/db'
+import type {
+  TCreateCommunityPayload,
+  TGetUserCommunityPostQuery,
+} from './community-posts.validations'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import {
@@ -14,7 +17,7 @@ import {
   deleteSingleFileFromS3,
   uploadMultipleFileToS3,
 } from 'packages/media-hub/src'
-import mongoose from 'mongoose'
+import mongoose, { type PipelineStage } from 'mongoose'
 
 // 1. create Community post :
 const createCommunityPost = async (
@@ -159,6 +162,10 @@ const updateCommunityPost = async (
 // 4. Get post by id:
 const getPostById = async (postId: string) => {
   const post = await CommunityPost.findById(postId)
+
+  if (!post) {
+    throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
+  }
   return post
 }
 
@@ -209,10 +216,210 @@ const deletePostById = async (user: IUser, postId: string) => {
   }
 }
 
+// 6. Get all post relevant to me in my community:
+const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommunityPostQuery) => {
+  const {
+    fromDate,
+    toDate,
+    searchTerm,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    limit = 10,
+    page = 1,
+  } = query
+
+  const dataLimit = Number(limit)
+  const skip = (Number(page) - 1) * dataLimit
+
+  // 1. Check the user and get user profile:
+  const profile = await UserProfile.findOne({
+    user: user?._id,
+  })
+  if (!profile) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Profile not found!')
+  }
+
+  const stationIds = []
+  // 2. Check current station exists?:
+  const currentStation = await DutyStation.findById(profile.currentStation)
+  if (!currentStation) {
+    throw new AppError(httpStatus.NOT_FOUND, `Current station doesn't exists!`)
+  }
+  stationIds.push(currentStation?._id)
+
+  // 3. Check current station exists?:
+  let futureStation = null
+  if (profile.futureStation) {
+    futureStation = await DutyStation.findById(profile.futureStation)
+    if (!futureStation) {
+      throw new AppError(httpStatus.NOT_FOUND, `Future station doesn't exists!`)
+    }
+  }
+  stationIds.push(futureStation?._id)
+
+  const pipeline: PipelineStage[] = []
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const matchingStage: PipelineStage = {
+    $match: {
+      station: {
+        $in: stationIds,
+      },
+    },
+  }
+
+  if (fromDate || toDate) {
+    const dateFilter: Record<string, Date> = {}
+    if (fromDate) {
+      dateFilter.$gte = new Date(fromDate)
+    }
+    if (toDate) {
+      dateFilter.$lte = new Date(toDate)
+    }
+    matchingStage.$match.createdAt = dateFilter
+  }
+
+  pipeline.push(matchingStage)
+
+  // prepare station lookup :
+  pipeline.push({
+    $lookup: {
+      from: 'dutystations',
+      localField: 'station',
+      foreignField: '_id',
+      as: 'station',
+    },
+  })
+
+  pipeline.push({
+    $unwind: {
+      path: '$station',
+      preserveNullAndEmptyArrays: true,
+    },
+  })
+
+  // prepare station lookup :
+  pipeline.push({
+    $lookup: {
+      from: 'users',
+      localField: 'author',
+      foreignField: '_id',
+      as: 'author',
+      pipeline: [
+        {
+          $project: {
+            password: 0,
+            twoFactorBackupCodes: 0,
+          },
+        },
+      ],
+    },
+  })
+
+  pipeline.push({
+    $unwind: {
+      path: '$author',
+      preserveNullAndEmptyArrays: true,
+    },
+  })
+
+  // Final projection
+  pipeline.push({
+    $project: {
+      _id: 1,
+      content: 1,
+      attachments: 1,
+
+      // Flatten author
+      authorId: '$author._id',
+      authorName: '$author.name',
+      authorEmail: '$author.email',
+      authorStatus: '$author.status',
+      authorRole: '$author.role',
+
+      // Flatten station
+      stationId: '$station._id',
+      stationName: '$station.name',
+      stationCountry: '$station.country',
+      stationState: '$station.state',
+      stationCity: '$station.city',
+      stationType: '$station.type',
+
+      // timestamps
+      createdAt: 1,
+      updatedAt: 1,
+    },
+  })
+
+  // searchable fields:
+  const searchableFields = [
+    'authorName',
+    'authorEmail',
+    'stationName',
+    'stationCountry',
+    'stationCity',
+    'stationType',
+    'content',
+  ]
+
+  if (searchTerm) {
+    pipeline.push({
+      $match: {
+        $or: searchableFields.map((field) => {
+          return { [field]: { $regex: searchTerm, $options: 'i' } }
+        }),
+      },
+    })
+  }
+
+  // sorting:
+  pipeline.push({
+    $sort: {
+      [sortBy]: sortOrder === 'asc' ? 1 : -1,
+    },
+  })
+
+  pipeline.push({
+    $facet: {
+      data: [
+        {
+          $skip: skip,
+        },
+        {
+          $limit: dataLimit,
+        },
+      ],
+      meta: [
+        {
+          $count: 'total',
+        },
+      ],
+    },
+  })
+
+  // 4. Run Aggregation :
+  const posts = await CommunityPost.aggregate(pipeline)
+
+  const data = posts[0].data
+  const total = posts[0]?.meta[0]?.total || 0
+  const totalPages = Math.ceil(total / dataLimit)
+
+  return {
+    data,
+    meta: {
+      page: Number(page),
+      limit: dataLimit,
+      total,
+      totalPages,
+    },
+  }
+}
+
 export const communityPostServices = {
   createCommunityPost,
   deletePostAttachment,
   updateCommunityPost,
   deletePostById,
   getPostById,
+  getUserCommunityPostsByUserId,
 }

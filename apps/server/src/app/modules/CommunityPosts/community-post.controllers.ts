@@ -2,6 +2,7 @@ import { getUserFromRequest } from '@app/libs/get-user-from-requests'
 import { catchAsync, sendResponse } from '@repo/shared'
 import { communityPostServices } from './community-posts.services'
 import httpStatus from 'http-status'
+import type { TGetUserCommunityPostQuery } from './community-posts.validations'
 
 // 1. Create Community Post:
 const createCommunityPost = catchAsync(async (req, res) => {
@@ -45,7 +46,7 @@ const updateCommunityPost = catchAsync(async (req, res) => {
 
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.CREATED,
+    statusCode: httpStatus.OK,
     message: 'The post has been updated successfully!',
     data: result,
   })
@@ -59,7 +60,7 @@ const getCommunityPostById = catchAsync(async (req, res) => {
 
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.CREATED,
+    statusCode: httpStatus.OK,
     message: 'The post is retrived successfully!',
     data: result,
   })
@@ -74,17 +75,33 @@ const deleteCommunityPostById = catchAsync(async (req, res) => {
 
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.CREATED,
+    statusCode: httpStatus.OK,
     message: 'The post is deleted successfully!',
     data: result,
   })
 })
 
-export 
-const communityPostControllers = {
+// 5. delete Post by id:
+const getUserCommunityPosts = catchAsync(async (req, res) => {
+  const query = req.query as unknown as TGetUserCommunityPostQuery
+  const user = await getUserFromRequest(req)
+
+  const result = await communityPostServices.getUserCommunityPostsByUserId(user, query)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'All community posts are retrived successfully!',
+    data: result.data,
+    meta: result.meta,
+  })
+})
+
+export const communityPostControllers = {
   createCommunityPost,
   deleteCommunityPostAttachment,
   updateCommunityPost,
   getCommunityPostById,
   deleteCommunityPostById,
+  getUserCommunityPosts,
 }

@@ -1,5 +1,4 @@
 import { model, Schema } from 'mongoose'
-import type { ICommunityPost } from '../CommunityPosts'
 import type { ICommunityComment } from './community-comments.interface'
 
 const CommunityCommentSchema = new Schema<ICommunityComment>(
@@ -33,4 +32,4 @@ const CommunityCommentSchema = new Schema<ICommunityComment>(
   }
 )
 
-export const CommunityComment = model<ICommunityPost>('CommunityComment', CommunityCommentSchema)
+export const CommunityComment = model<ICommunityComment>('CommunityComment', CommunityCommentSchema)

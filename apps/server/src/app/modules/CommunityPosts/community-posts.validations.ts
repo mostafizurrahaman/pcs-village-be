@@ -1,4 +1,13 @@
-import { requiredString } from 'packages/shared/src'
+import { communityPostSortableFields } from 'packages/db/src'
+
+import {
+  optionalDate,
+  optionalEnumString,
+  optionalNumber,
+  optionalString,
+  requiredString,
+  sortOrderValues,
+} from '@repo/shared'
 import z from 'zod'
 
 const createCommunityPost = z.object({
@@ -37,12 +46,25 @@ const deleteCommunityPostAttachmentById = z.object({
   }),
 })
 
+const getUserCommunityPost = z.object({
+  query: z.object({
+    page: optionalNumber('Page').default(1),
+    limit: optionalNumber('Limit').default(10),
+    searchTerm: optionalString('Searchterm'),
+    sortBy: optionalEnumString(communityPostSortableFields, 'SortBy'),
+    sortOrder: optionalEnumString(sortOrderValues, 'sortOrder'),
+    fromDate: optionalDate('fromDate'),
+    toDate: optionalDate('toDate'),
+  }),
+})
+
 export const communityPostValidations = {
   createCommunityPost,
   updateCommunityPost,
   getCommunityPostById,
   deleteCommunityPostById,
   deleteCommunityPostAttachmentById,
+  getUserCommunityPost,
 }
 
 // 1. Create Community Payload interfaces :
@@ -51,3 +73,4 @@ export type TCreateCommunityPayload = z.infer<typeof createCommunityPost.shape.b
 // 2. Update Community Payload and params:
 export type TUpdateCommunityPayload = z.infer<typeof updateCommunityPost.shape.body>
 export type TUpdateCommunityParmas = z.infer<typeof updateCommunityPost.shape.params>
+export type TGetUserCommunityPostQuery = z.infer<typeof getUserCommunityPost.shape.query>

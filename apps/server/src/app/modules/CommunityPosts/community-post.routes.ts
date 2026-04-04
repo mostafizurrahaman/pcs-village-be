@@ -21,9 +21,12 @@ router.post(
   communityPostControllers.createCommunityPost
 )
 
+// 6. Get all the post  for the user (Current and future stations)
+router.get('/relevant', auth(AuthRoles.USER), communityPostControllers.getUserCommunityPosts)
+
 // 2. Community Post Delete Attachments:
 router.delete(
-  '/attachment/:id',
+  '/attachments/:id',
   auth(AuthRoles.USER),
   validateRequest(communityPostValidations.deleteCommunityPostAttachmentById),
   communityPostControllers.deleteCommunityPostAttachment
@@ -50,7 +53,7 @@ router.get(
 )
 
 // 5. Community Post DELETE (SINGLE):
-router.get(
+router.delete(
   '/:id',
   auth(AuthRoles.USER),
   validateRequest(communityPostValidations.deleteCommunityPostById),
