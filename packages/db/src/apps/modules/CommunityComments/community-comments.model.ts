@@ -16,7 +16,6 @@ const CommunityCommentSchema = new Schema<ICommunityComment>(
     parent: {
       type: Schema.Types.ObjectId,
       ref: 'CommunityComment',
-      required: true,
     },
     attachments: {
       type: [String],

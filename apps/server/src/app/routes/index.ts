@@ -1,5 +1,6 @@
 import { authRoutes } from '@app/modules/Auth/user.routes'
 import { branchRoutes } from '@app/modules/Branch/branch.route'
+import { communitCommentRoutes } from '@app/modules/CommunityPostComments/community-post-comments.routes'
 import { communityPostRoutes } from '@app/modules/CommunityPosts/community-post.routes'
 import { DutyStationRoutes } from '@app/modules/DutyStation/duty-station.routes'
 import express, { Router } from 'express'
@@ -22,6 +23,10 @@ const routes = [
   {
     path: '/community-posts',
     route: communityPostRoutes,
+  },
+  {
+    path: '/community-comments',
+    route: communitCommentRoutes,
   },
 ]
 
