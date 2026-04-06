@@ -324,6 +324,30 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
       as: 'author',
       pipeline: [
         {
+          $lookup: {
+            from: 'userprofiles',
+            let: {
+              userId: '$_id',
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$$userId', '$user'],
+                  },
+                },
+              },
+            ],
+            as: 'profile',
+          },
+        },
+        {
+          $unwind: {
+            path: '$profile',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $project: {
             password: 0,
             twoFactorBackupCodes: 0,
@@ -392,7 +416,7 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
       authorStatus: '$author.status',
       authorRole: '$author.role',
       authorImage: '$author.profileImage',
-
+      affiliation: '$author.profile.affiliation',
       // Flatten station
       stationId: '$station._id',
       stationName: '$station.name',
