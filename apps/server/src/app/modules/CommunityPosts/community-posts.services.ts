@@ -18,6 +18,7 @@ import {
   uploadMultipleFileToS3,
 } from 'packages/media-hub/src'
 import mongoose, { type PipelineStage } from 'mongoose'
+import { logger } from '@app/libs/logger'
 
 // 1. create Community post :
 const createCommunityPost = async (
@@ -176,7 +177,7 @@ const deletePostById = async (user: IUser, postId: string) => {
   try {
     session.startTransaction()
 
-    // 1. Check post
+    // 1. Check if post exists
     const existingPost = await CommunityPost.findById(postId).session(session)
 
     if (!existingPost) {
@@ -188,24 +189,40 @@ const deletePostById = async (user: IUser, postId: string) => {
       throw new AppError(httpStatus.FORBIDDEN, `You are not allowed to delete this post.`)
     }
 
-    // 3. Delete related comments
-    await CommunityComment.deleteMany({ post: existingPost._id }, { session })
+    // 3. COLLECT ALL COMMENT ATTACHMENTS BEFORE DELETING FROM DB
+    // Fetch only the attachments field from all comments related to this post
+    const commentsWithFiles = await CommunityComment.find(
+      { post: postId, attachments: { $exists: true, $not: { $size: 0 } } },
+      { attachments: 1 }
+    ).session(session)
 
-    // 4. Delete related likes
-    await PostLike.deleteMany({ post: existingPost._id }, { session })
+    // Flatten the array of arrays into a single list of S3 URLs/Keys
+    const allCommentAttachments = commentsWithFiles.reduce((acc, curr) => {
+      return [...acc, ...(curr.attachments || [])]
+    }, [] as string[])
 
-    // 5. Delete post
-    const deletedPost = await CommunityPost.findByIdAndDelete(postId, {
-      session,
-    })
+    // 4. Delete related comments from Database
+    await CommunityComment.deleteMany({ post: postId }, { session })
 
-    // ⚠️ IMPORTANT: commit DB changes first
+    // 5. Delete related likes from Database
+    await PostLike.deleteMany({ post: postId }, { session })
+
+    // 6. Delete the Post itself from Database
+    const deletedPost = await CommunityPost.findByIdAndDelete(postId, { session })
+
+    // 7. Commit DB changes
     await session.commitTransaction()
     session.endSession()
 
-    // 6. Delete attachments AFTER commit (external service)
-    if (existingPost.attachments?.length > 0) {
-      await deleteMultipleFilesFromS3(existingPost.attachments)
+    // 8. CLEANUP S3 (External Service)
+    // Combine post attachments and comment attachments for a single S3 cleanup call
+    const filesToDelete = [...(existingPost.attachments || []), ...allCommentAttachments]
+
+    if (filesToDelete.length > 0) {
+      // It's better to filter for unique values if a file might be referenced twice
+      const uniqueFiles = [...new Set(filesToDelete)]
+      logger.info('uniqueFiles', uniqueFiles)
+      await deleteMultipleFilesFromS3(uniqueFiles)
     }
 
     return deletedPost
@@ -323,6 +340,44 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
     },
   })
 
+  pipeline.push({
+    $lookup: {
+      from: 'communitycomments',
+      let: {
+        postId: '$_id',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: ['$$postId', '$post'],
+            },
+          },
+        },
+      ],
+      as: 'comments',
+    },
+  })
+
+  pipeline.push({
+    $lookup: {
+      from: 'postlikes',
+      let: {
+        postId: '$_id',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: ['$$postId', '$post'],
+            },
+          },
+        },
+      ],
+      as: 'likes',
+    },
+  })
+
   // Final projection
   pipeline.push({
     $project: {
@@ -336,6 +391,7 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
       authorEmail: '$author.email',
       authorStatus: '$author.status',
       authorRole: '$author.role',
+      authorImage: '$author.profileImage',
 
       // Flatten station
       stationId: '$station._id',
@@ -344,6 +400,12 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
       stationState: '$station.state',
       stationCity: '$station.city',
       stationType: '$station.type',
+      comments: {
+        $size: '$comments',
+      },
+      likes: {
+        $size: '$likes',
+      },
 
       // timestamps
       createdAt: 1,
@@ -402,7 +464,7 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
 
   const data = posts[0].data
   const total = posts[0]?.meta[0]?.total || 0
-  const totalPages = Math.ceil(total / dataLimit)
+  const totalPages = Math.ceil(total / limit)
 
   return {
     data,

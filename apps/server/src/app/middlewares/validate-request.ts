@@ -4,7 +4,7 @@ import type { ZodObject } from 'zod'
 
 export const validateRequest = (schema: ZodObject) => {
   return catchAsync(async (req, res, next) => {
-    logger.debug('Data before validation', {
+    logger.info('Data before validation', {
       body: req.body,
       params: req.params,
       query: req.query,
@@ -17,7 +17,7 @@ export const validateRequest = (schema: ZodObject) => {
       cookies: req.cookies,
     })
 
-    logger.debug('After Validation', data)
+    logger.info('After Validation', data)
 
     if (success) {
       if (data.body) {

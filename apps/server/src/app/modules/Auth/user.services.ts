@@ -38,7 +38,7 @@ import configs from '@app/configs'
 import mongoose, { Types } from 'mongoose'
 import { renderEmail, ResetPasswordOTPEmail, SignupOTPEmail } from '@repo/email-templates'
 import { sendEmail } from '@repo/email-sender'
-import { uploadSingleFileToS3 } from 'packages/media-hub/src'
+import { uploadSingleFileToS3 } from '@repo/media-hub'
 
 // 1. Signup
 const signUp = async (payload: ISignUpSchemaType, profileImage?: Express.Multer.File) => {

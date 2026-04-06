@@ -27,4 +27,18 @@ router.get(
   communityCommentController.getCommunityPostById
 )
 
+router.delete(
+  '/:id',
+  auth(AuthRoles.USER),
+  validateRequest(CommunityCommentValidations.deleteCommentById),
+  communityCommentController.deleteCommentById
+)
+
+router.get(
+  '/:postId/all',
+  auth(AuthRoles.USER),
+  validateRequest(CommunityCommentValidations.getAllCommentsByPostId),
+  communityCommentController.getAllCommentsByPostID
+)
+
 export const communitCommentRoutes = router
