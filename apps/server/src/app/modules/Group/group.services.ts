@@ -1,7 +1,9 @@
 import {
   DutyStation,
   Group,
+  GroupMember,
   GroupType,
+  MembershipStatus,
   UserProfile,
   type IUser,
   type TGroupType,
@@ -67,7 +69,7 @@ const joinGroup = async (user: IUser, groupId: string) => {
   }
 
   // 3. Check time frame if it's is Arrival group:
-  if (group.type === GroupType.ARRIVAL) {
+  if (group.type === GroupType.ARRIVAL || group.type === GroupType.CLASSIFIED) {
     const userWindow = getPcsWindow(profile?.estimatedPcsDate)
     if (userWindow !== group.timeline) {
       throw new AppError(
@@ -76,6 +78,51 @@ const joinGroup = async (user: IUser, groupId: string) => {
       )
     }
   }
+
+  // 4. If the group type is NEWCOMMER
+  if (group.type === GroupType.NEWCOMER) {
+    const userWindow = getPcsWindow(new Date())
+
+    if (!profile.isArrived) {
+      throw new AppError(400, "You haven't reached your base yet! Join an Arrival group instead.")
+    }
+
+    if (userWindow !== group.timeline) {
+      throw new AppError(
+        httpStatus.CONFLICT,
+        "You can only join the current quarter's newcomer group."
+      )
+    }
+  }
+
+  // 5. Archive previous group memeber ship:
+  await GroupMember.updateMany(
+    {
+      user: user?._id,
+      status: MembershipStatus.ACTIVE,
+    },
+    {
+      status: MembershipStatus.ARCHIVED,
+      archivedAt: new Date(),
+    }
+  )
+
+  // 6. Check is here already a member of this group?:
+  const existingMember = await GroupMember.findOne({ user: user?._id, group: groupId })
+  if (existingMember) {
+    existingMember.status = 'ACTIVE'
+    await existingMember.save()
+    return existingMember
+  }
+
+  const member = await GroupMember.create({
+    user: user?._id,
+    status: MembershipStatus.ACTIVE,
+    group: group?._id,
+    joinedAt: new Date(),
+  })
+
+  return member
 }
 
 export const groupServices = {
