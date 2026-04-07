@@ -3,10 +3,15 @@ import type { ICreateDutyStationPayload, IGetAllDutyStationsQuery } from './duty
 import { AppError, GLOBAL_MESSAGES, QueryBuilder } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import type { QueryFilter } from 'mongoose'
+import configs from '@app/configs'
 
 // 1. Create Duty station:
 const createDutyStation = async (user: IUser, payload: ICreateDutyStationPayload) => {
   const { name, country, state, city, type } = payload
+
+  if (name?.toLowerCase() === configs?.base?.name?.toLowerCase()) {
+    throw new AppError(httpStatus.BAD_REQUEST, `Base name shouldn't be ${configs?.base?.name}`)
+  }
 
   const newDutyStation = {
     name,
@@ -16,6 +21,7 @@ const createDutyStation = async (user: IUser, payload: ICreateDutyStationPayload
     type,
     suggestedBy: user._id,
     isApproved: user?.role !== AuthRoles.USER, // other roles are super admin and admin
+    isDeletable: true,
   }
 
   const dutyStation = await DutyStation.create(newDutyStation)
@@ -29,6 +35,10 @@ const updateDutyStation = async (id: string, payload: Partial<ICreateDutyStation
 
   if (!existingDutyStation) {
     throw new AppError(httpStatus.NOT_FOUND, GLOBAL_MESSAGES.DUTY_STATION_NOT_FOUND)
+  }
+
+  if (payload?.name && payload?.name?.toLowerCase() === configs?.base?.name?.toLowerCase()) {
+    throw new AppError(httpStatus.BAD_REQUEST, `Base name shouldn't be ${configs?.base?.name}`)
   }
 
   // Update fields dynamically
@@ -55,10 +65,13 @@ const getDutyStationById = async (id: string) => {
 
 // 4. Delete Duty station by ID:
 const deleteDutyStationById = async (id: string) => {
-  const existingDutyStation = await DutyStation.findByIdAndDelete(id).populate(
-    'suggestedBy',
-    'name email profileImage'
-  )
+  const existingDutyStation = await DutyStation.findOneAndDelete({
+    _id: id,
+    name: {
+      $ne: configs.base.name,
+    },
+    isDeleteable: true,
+  }).populate('suggestedBy', 'name email profileImage')
 
   if (!existingDutyStation) {
     throw new AppError(httpStatus.NOT_FOUND, GLOBAL_MESSAGES.DUTY_STATION_NOT_FOUND)

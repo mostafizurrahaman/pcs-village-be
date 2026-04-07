@@ -2,7 +2,6 @@ import { model, Schema } from 'mongoose'
 import type { IDutyStation } from './duty-station.interface'
 import { DutyStationTypeValues } from './duty-station.constant'
 
-
 const dutyStationSchema = new Schema<IDutyStation>(
   {
     name: {
@@ -29,6 +28,10 @@ const dutyStationSchema = new Schema<IDutyStation>(
       type: String,
       enum: DutyStationTypeValues,
       required: true,
+    },
+    isDeleteable: {
+      type: Boolean,
+      default: true,
     },
     isApproved: {
       type: Boolean,

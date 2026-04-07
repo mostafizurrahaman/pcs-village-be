@@ -4,6 +4,7 @@ import configs from './app/configs'
 import app from './app'
 import { logger } from '@app/libs/logger'
 import { seedSuperAdmin } from '@app/libs/seed-super-admin'
+import { seedClassifiedBase } from '@app/libs/seed-classified-base'
 
 let server: Server
 //  boostrap function :
@@ -15,6 +16,8 @@ const boostrap = async () => {
 
     await seedSuperAdmin()
     // server listen :
+
+    await seedClassifiedBase()
     server = app.listen(configs.port, () => {
       logger.info(`🧑‍🚀🚀 Server is running on ${configs.port}`)
     })

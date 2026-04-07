@@ -39,6 +39,7 @@ import mongoose, { Types } from 'mongoose'
 import { renderEmail, ResetPasswordOTPEmail, SignupOTPEmail } from '@repo/email-templates'
 import { sendEmail } from '@repo/email-sender'
 import { uploadSingleFileToS3 } from '@repo/media-hub'
+import { groupServices } from '../Group/group.services'
 
 // 1. Signup
 const signUp = async (payload: ISignUpSchemaType, profileImage?: Express.Multer.File) => {
@@ -189,6 +190,12 @@ const signUp = async (payload: ISignUpSchemaType, profileImage?: Express.Multer.
       subject: 'Your OTP for Account Verification',
     })
 
+    // 8. Find or create group if it has new timeframe and type :
+    const suggestedGroup = await groupServices.findOrCreateSuggestedGroup({
+      futureStationId: futureStation!,
+      pcsDate: estimatedPcsDate!,
+    })
+
     await session.commitTransaction()
     session.endSession()
 
@@ -203,6 +210,7 @@ const signUp = async (payload: ISignUpSchemaType, profileImage?: Express.Multer.
       _id: newUser?._id,
       createdAt: newUser?.createdAt,
       updatedAt: newUser?.updatedAt,
+      suggestedGroup: suggestedGroup?._id,
     }
   } catch (error: any) {
     await session.abortTransaction()

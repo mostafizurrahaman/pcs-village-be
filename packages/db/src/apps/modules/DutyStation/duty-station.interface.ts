@@ -8,6 +8,7 @@ export interface IDutyStation extends Document {
   city: string
   type: DutyStationType
   isApproved: boolean
+  isDeleteable: boolean
   suggestedBy: Types.ObjectId | string
   createdAt: Date
   updatedAt: Date

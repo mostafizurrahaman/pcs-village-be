@@ -57,6 +57,9 @@ const envSchema = z.object({
   SUPER_ADMIN_EMAIL: z.string().email(),
   OTP_EXPIRES_IN: z.string().transform(Number).default(5),
   OTP_DIGITS: z.string().transform(Number).default(6),
+
+  //  Classified base naem:
+  CLASSIFIED_BASE_NAME: z.string(),
 })
 
 // 3. Validate process.env
@@ -135,6 +138,10 @@ const configs = {
   otpSettings: {
     expiresIn: env.OTP_EXPIRES_IN,
     digits: env.OTP_DIGITS,
+  },
+
+  base: {
+    name: env.CLASSIFIED_BASE_NAME,
   },
 } as const
 

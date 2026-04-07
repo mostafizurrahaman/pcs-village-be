@@ -3,6 +3,8 @@ import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
 
 const toggleLike = async (user: IUser, postId: string) => {
+
+  
   // 1. Check if the post exists
   const postExists = await CommunityPost.exists({ _id: postId })
 
