@@ -1,4 +1,11 @@
-import { DutyStation, Group, GroupType, type TGroupType } from 'packages/db/src'
+import {
+  DutyStation,
+  Group,
+  GroupType,
+  UserProfile,
+  type IUser,
+  type TGroupType,
+} from 'packages/db/src'
 import { AppError, getPcsWindow } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
@@ -43,6 +50,32 @@ const findOrCreateSuggestedGroup = async (payload: {
   }
 
   return group._id
+}
+
+// 2. Join Into Group :
+const joinGroup = async (user: IUser, groupId: string) => {
+  // 1. Check is the user profile exists?:
+  const profile = await UserProfile.findOne({ user: user?._id })
+  if (!profile) {
+    throw new AppError(httpStatus.NOT_FOUND, `User profile doesn't completed!`)
+  }
+
+  // 2. Check is group exists:
+  const group = await Group.findById(groupId)
+  if (!group) {
+    throw new AppError(httpStatus.NOT_FOUND, `Group doesn't exists!`)
+  }
+
+  // 3. Check time frame if it's is Arrival group:
+  if (group.type === GroupType.ARRIVAL) {
+    const userWindow = getPcsWindow(profile?.estimatedPcsDate)
+    if (userWindow !== group.timeline) {
+      throw new AppError(
+        httpStatus.CONFLICT,
+        `You are trying to join a group that doesn't match your move date.`
+      )
+    }
+  }
 }
 
 export const groupServices = {

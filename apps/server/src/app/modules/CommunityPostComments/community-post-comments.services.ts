@@ -146,40 +146,6 @@ const getAllCommentsByPostID = async (
     throw new AppError(httpStatus.NOT_FOUND, `Post deosn't exists!`)
   }
 
-  // 2. Now get the comments:
-  // const comments = await CommunityComment.aggregate([
-  //   {
-  //     $match: {
-  //       post: post?._id,
-  //       parent: null,
-  //     },
-  //   },
-  //   {
-  //     $lookup: {
-  //       from: 'users',
-  //       localField: 'author',
-  //       foreignField: '_id',
-  //       as: 'author',
-  //     },
-  //   },
-  //   {
-  //     $unwind: {
-  //       path: '$author',
-  //       preserveNullAndEmptyArrays: true,
-  //     },
-  //   },
-  //   {
-  //     $graphLookup: {
-  //       from: 'communitycomments',
-  //       startWith: '$_id',
-  //       connectFromField: '_id',
-  //       connectToField: 'parent',
-  //       as: 'replies',
-  //       depthField: 'level',
-  //     },
-  //   },
-  // ])
-
   const comments = await CommunityComment.aggregate([
     {
       $match: {
@@ -297,7 +263,7 @@ const getAllCommentsByPostID = async (
     },
   ])
 
-  const total = comments?.[0]?.totalCount?.[0].total || 0
+  const total = comments?.[0]?.totalCount?.[0]?.total || 0
   const totalPages = Math.ceil(total / dataLimit)
   const data = comments?.[0].comments
 
