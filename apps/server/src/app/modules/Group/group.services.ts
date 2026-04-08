@@ -127,4 +127,5 @@ const joinGroup = async (user: IUser, groupId: string) => {
 
 export const groupServices = {
   findOrCreateSuggestedGroup,
+  joinGroup,
 }

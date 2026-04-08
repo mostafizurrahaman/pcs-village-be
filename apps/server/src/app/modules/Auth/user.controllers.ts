@@ -1,7 +1,8 @@
-import { catchAsync, getUserFromRequest, sendResponse, setCookie } from '@repo/shared'
+import { catchAsync, sendResponse, setCookie } from '@repo/shared'
 import { AuthServices } from './user.services'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
+import { getUserFromRequest } from '@app/libs/get-user-from-requests'
 
 // 1. Sign up
 const signUp = catchAsync(async (req, res) => {
@@ -137,6 +138,23 @@ const getMe = catchAsync(async (req, res) => {
   })
 })
 
+/**
+ * 11. Update User Profile
+ */
+const updateProfile = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+  const profileImage = req.file as Express.Multer.File
+
+  const result = await AuthServices.updateProfile(user?._id?.toString(), req.body, profileImage)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Profile and group preferences updated successfully!',
+    data: result,
+  })
+})
+
 export const AuthController = {
   signUp,
   resendSignupOTP,
@@ -148,4 +166,5 @@ export const AuthController = {
   resetPassword,
   changedPassword,
   getMe,
+  updateProfile,
 }

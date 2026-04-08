@@ -1,5 +1,11 @@
-import { enumString, optionalString, requiredEmail, requiredString } from '@repo/shared'
-import { AffiliationValues, KidsAgeRangeValues } from 'packages/db/src'
+import {
+  enumString,
+  optionalEnumString,
+  optionalString,
+  requiredEmail,
+  requiredString,
+} from '@repo/shared'
+import { AffiliationValues, KidsAgeRangeValues } from '@repo/db'
 import z from 'zod/v4'
 
 // 1. Signup
@@ -83,6 +89,21 @@ const changedPasswordSchema = z.object({
   }),
 })
 
+const updateProfileSchema = z.object({
+  body: z.object({
+    name: optionalString('Name'),
+
+    // profile info:
+    branch: optionalString('Branch ID'),
+    affiliation: optionalEnumString(AffiliationValues, 'Affiliation'),
+    interestTags: z.array(z.string()).optional(),
+    kidsAgeRanges: z.array(enumString(KidsAgeRangeValues, 'KidsAgeRange')).optional(),
+    currentStation: optionalString('Current Station ID'),
+    futureStation: optionalString('Future Station ID'),
+    estimatedPcsDate: optionalString('Estimated PCS Date'),
+  }),
+})
+
 export const AuthValidations = {
   signUserSchema,
   loginSchema,
@@ -93,6 +114,7 @@ export const AuthValidations = {
   resendOTPSchema,
   changedPasswordSchema,
   resetPasswordSchema,
+  updateProfileSchema,
 }
 
 export type ISignUpSchemaType = z.infer<typeof signUserSchema.shape.body>
@@ -104,3 +126,4 @@ export type IVerifyResetPasswordOtpType = z.infer<typeof verifyResetPasswordOtpS
 export type IResetPasswordOtpType = z.infer<typeof resetPasswordSchema.shape.body>
 export type IResetPasswordOtpQueryType = z.infer<typeof resetPasswordSchema.shape.query>
 export type IChangedPasswordType = z.infer<typeof changedPasswordSchema.shape.body>
+export type IUpdateProfilePayloadType = z.infer<typeof updateProfileSchema.shape.body>

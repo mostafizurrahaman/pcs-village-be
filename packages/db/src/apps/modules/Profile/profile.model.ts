@@ -43,9 +43,10 @@ const userProfileSchema = new Schema<IUserProfileDocument>(
       trim: true,
     },
     isArrived: {
-      type: Date,
+      type: boolean,
+      required: true,
+      default: false,
     },
-  
   },
   {
     timestamps: true,

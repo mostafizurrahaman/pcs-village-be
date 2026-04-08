@@ -4,6 +4,8 @@ import {
   AuthStatus,
   Branch,
   DutyStation,
+  GroupMember,
+  MembershipStatus,
   Otp,
   otpTypes,
   User,
@@ -816,6 +818,135 @@ const getMe = async (user: IUser) => {
   return me[0]
 }
 
+/**
+ * 11. Update user profile and handle side effects like group archiving
+ */
+const updateProfile = async (userId: string, payload: any, profileImage?: Express.Multer.File) => {
+  const {
+    name,
+    branch,
+    currentStation,
+    futureStation,
+    estimatedPcsDate,
+    interestTags,
+    kidsAgeRanges,
+    affiliation,
+  } = payload
+
+  const session = await mongoose.startSession()
+
+  try {
+    session.startTransaction()
+
+    // 1. Validate if the provided IDs exist in the database
+    if (branch) {
+      const branchExists = await Branch.findById(branch)
+      if (!branchExists) throw new AppError(httpStatus.BAD_REQUEST, 'Selected Branch not found!')
+    }
+
+    if (currentStation) {
+      const currentExists = await DutyStation.findById(currentStation)
+      if (!currentExists)
+        throw new AppError(httpStatus.NOT_FOUND, 'Current duty station not found!')
+    }
+
+    if (futureStation) {
+      const futureExists = await DutyStation.findById(futureStation)
+      if (!futureExists) throw new AppError(httpStatus.NOT_FOUND, 'Future duty station not found!')
+    }
+
+    // 2. Handle Profile Image Upload (S3)
+    let imageUrl
+    if (profileImage) {
+      const uploaded = await uploadSingleFileToS3(profileImage, 'profiles')
+      imageUrl = uploaded.url
+    }
+
+    // 3. Update the core User collection (Name & Profile Image)
+    const userUpdateData: any = {}
+    if (name) userUpdateData.name = name
+    if (imageUrl) userUpdateData.profileImage = imageUrl
+
+    if (Object.keys(userUpdateData).length > 0) {
+      await User.findByIdAndUpdate(userId, userUpdateData, { session })
+    }
+
+    // 4. Group Transition Logic: Fetch old profile to detect changes in moving plans
+    const oldProfile = await UserProfile.findOne({ user: userId }).session(session)
+    if (!oldProfile) throw new AppError(httpStatus.NOT_FOUND, 'User profile record not found!')
+
+    // Check if the user has changed their Future Station or their PCS Date
+    const isFutureStationChanged =
+      futureStation && oldProfile.futureStation?.toString() !== futureStation.toString()
+    const isPcsDateChanged = estimatedPcsDate && oldProfile.estimatedPcsDate !== estimatedPcsDate
+
+    if (isFutureStationChanged || isPcsDateChanged) {
+      /**
+       * If plans changed, archive previous active memberships.
+       * This ensures the user doesn't stay in a group for a base or date they are no longer going to.
+       */
+      await GroupMember.updateMany(
+        {
+          user: userId,
+          status: MembershipStatus.ACTIVE,
+        },
+        {
+          $set: {
+            status: MembershipStatus.ARCHIVED,
+            archivedAt: new Date(),
+          },
+        },
+        { session }
+      )
+    }
+
+    // 5. Update the UserProfile collection
+    const profileUpdateData = {
+      ...(branch && { branch }),
+      ...(affiliation && { affiliation }),
+      ...(interestTags && { interestTags }),
+      ...(kidsAgeRanges && { kidsAgeRanges }),
+      ...(currentStation && { currentStation }),
+      ...(futureStation && { futureStation }),
+      ...(isFutureStationChanged && { isArrived: false }),
+      ...(estimatedPcsDate && { estimatedPcsDate }),
+    }
+
+    const updatedProfile = await UserProfile.findOneAndUpdate(
+      { user: userId },
+      { $set: profileUpdateData },
+      { new: true, session }
+    )
+
+    // 6. Generate New Group Suggestion
+    // If the user has a valid future station and date, find the new matching cohort group
+    let suggestedGroup = null
+    if (updatedProfile?.futureStation && updatedProfile?.estimatedPcsDate) {
+      suggestedGroup = await groupServices.findOrCreateSuggestedGroup({
+        futureStationId: updatedProfile.futureStation.toString(),
+        pcsDate: updatedProfile.estimatedPcsDate,
+      })
+    }
+
+    // Commit all changes
+    await session.commitTransaction()
+    session.endSession()
+
+    return {
+      profile: updatedProfile,
+      suggestedGroupId: suggestedGroup?._id || null,
+    }
+  } catch (error: any) {
+    // Rollback changes if any error occurs
+    await session.abortTransaction()
+    session.endSession()
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to update profile'
+    )
+  }
+}
+
 export const AuthServices = {
   signUp,
   resendSignupOTP,
@@ -827,4 +958,5 @@ export const AuthServices = {
   resetPassword,
   changedPassword,
   getMe,
+  updateProfile,
 }

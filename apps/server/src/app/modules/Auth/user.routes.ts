@@ -79,4 +79,16 @@ router.get(
   AuthController.getMe
 )
 
+// 11. Get me:
+router.patch(
+  '/update-profile',
+  auth(AuthRoles.USER),
+  multerFactory({
+    category: 'image',
+    maxSizeInMB: 5,
+  }).single('profileImage'),
+  validateRequest(AuthValidations.updateProfileSchema),
+  AuthController.updateProfile
+)
+
 export const authRoutes = router
