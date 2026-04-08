@@ -79,7 +79,7 @@ router.get(
   AuthController.getMe
 )
 
-// 11. Get me:
+// 11. Update Profile:
 router.patch(
   '/update-profile',
   auth(AuthRoles.USER),

@@ -11,6 +11,7 @@ import {
 import { AppError, getPcsWindow } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
+import mongoose from 'mongoose'
 
 // 1. Find or create group:
 const findOrCreateSuggestedGroup = async (payload: {
@@ -125,7 +126,110 @@ const joinGroup = async (user: IUser, groupId: string) => {
   return member
 }
 
+// 3. MarkAsArrived:
+const markAsArrived = async (user: IUser) => {
+  // 1. Check is the user profile exists?:
+  const profile = await UserProfile.findOne({ user: user?._id })
+  if (!profile) {
+    throw new AppError(httpStatus.NOT_FOUND, `User profile doesn't exists!`)
+  }
+
+  // 2. Check future movement :
+  if (!profile.futureStation || !profile.estimatedPcsDate) {
+    throw new AppError(httpStatus.NOT_FOUND, `No future move found to mark as arrived.`)
+  }
+
+  // 3. Early arrival restriction:
+  const today = new Date()
+  const pcsDate = new Date(profile.estimatedPcsDate)
+  const timeDiff = pcsDate.getTime() - today.getTime()
+  const daysUntilPcs = timeDiff / (60 * 60 * 24 * 1000)
+  if (daysUntilPcs > 30) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `It's too early to mark as arrived. Please wait until you are closer to your PCS date.`
+    )
+  }
+
+  // 4. Exchange stations:
+  const newCurrentStation = profile.futureStation
+  const arrivalDate = new Date()
+  const currentWindow = getPcsWindow(arrivalDate)
+
+  const session = await mongoose.startSession()
+
+  try {
+    session.startTransaction()
+
+    // 5. update the profile with new information :
+    await UserProfile.findOneAndUpdate(
+      {
+        _id: user?._id,
+      },
+      {
+        $set: {
+          currentStation: newCurrentStation,
+          futureStation: null,
+          estimatedPcsDate: null,
+          isArrived: true,
+        },
+      },
+      {
+        session,
+      }
+    )
+
+    //6. Archive all previous active group:
+    await GroupMember.updateMany(
+      {
+        user: user?._id,
+        status: MembershipStatus.ACTIVE,
+      },
+      {
+        $set: {
+          status: MembershipStatus.ARCHIVED,
+          archivedAt: new Date(),
+        },
+      },
+      {
+        session,
+      }
+    )
+
+    // 7. Find or create new Commer group:
+    const newCommerGroup = await Group.findOneAndUpdate(
+      {
+        station: newCurrentStation,
+        timeline: currentWindow,
+        type: GroupType.NEWCOMER,
+      },
+      {
+        $setOnInsert: {
+          station: newCurrentStation,
+          timeline: currentWindow,
+          type: GroupType.NEWCOMER,
+          createdAt: new Date(),
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+        session,
+      }
+    )
+
+    return {
+      newStation: newCurrentStation,
+      suggestedGroup: newCommerGroup,
+    }
+  } catch (error) {
+    console.log(error)
+    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to mark as arrived!`)
+  }
+}
+
 export const groupServices = {
   findOrCreateSuggestedGroup,
   joinGroup,
+  markAsArrived,
 }
