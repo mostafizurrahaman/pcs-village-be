@@ -5,6 +5,7 @@ import { communityPostRoutes } from '@app/modules/CommunityPosts/community-post.
 import { contentRoutes } from '@app/modules/Content/content.route'
 import { DutyStationRoutes } from '@app/modules/DutyStation/duty-station.routes'
 import { faqRoutes } from '@app/modules/Faq/faq.routes'
+import { groupRoutes } from '@app/modules/Group/group.routes'
 import { communityLikeRoutes } from '@app/modules/PostLike/post-like.routes'
 import express, { Router } from 'express'
 
@@ -42,6 +43,10 @@ const routes = [
   {
     path: '/faq',
     route: faqRoutes,
+  },
+  {
+    path: '/group',
+    route: groupRoutes,
   },
 ]
 

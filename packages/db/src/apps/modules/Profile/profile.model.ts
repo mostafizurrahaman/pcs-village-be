@@ -43,7 +43,7 @@ const userProfileSchema = new Schema<IUserProfileDocument>(
       trim: true,
     },
     isArrived: {
-      type: boolean,
+      type: Boolean,
       required: true,
       default: false,
     },

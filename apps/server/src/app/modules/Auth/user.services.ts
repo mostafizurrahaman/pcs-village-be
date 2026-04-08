@@ -194,6 +194,7 @@ const signUp = async (payload: ISignUpSchemaType, profileImage?: Express.Multer.
 
     // 8. Find or create group if it has new timeframe and type :
     const suggestedGroup = await groupServices.findOrCreateSuggestedGroup({
+      userId: newUser?._id?.toString(),
       futureStationId: futureStation!,
       pcsDate: estimatedPcsDate!,
     })
@@ -923,6 +924,7 @@ const updateProfile = async (userId: string, payload: any, profileImage?: Expres
     let suggestedGroup = null
     if (updatedProfile?.futureStation && updatedProfile?.estimatedPcsDate) {
       suggestedGroup = await groupServices.findOrCreateSuggestedGroup({
+        userId: userId,
         futureStationId: updatedProfile.futureStation.toString(),
         pcsDate: updatedProfile.estimatedPcsDate,
       })

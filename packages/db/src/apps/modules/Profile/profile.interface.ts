@@ -10,7 +10,7 @@ export interface IUserProfile {
   currentStation: Types.ObjectId
   futureStation: Types.ObjectId
   estimatedPcsDate: string
-  isArrived: Date
+  isArrived: boolean
   createdAt: Date
   updatedAt: Date
 }
