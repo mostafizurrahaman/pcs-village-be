@@ -82,7 +82,7 @@ const deletePostAttachment = async (user: IUser, postId: string, url: string) =>
 
   const post = await CommunityPost.findOneAndUpdate(
     {
-      _id: existingPost,
+      _id: existingPost?._id,
     },
     {
       $pull: {

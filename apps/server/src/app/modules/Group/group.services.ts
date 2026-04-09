@@ -65,6 +65,7 @@ const findOrCreateSuggestedGroup = async (payload: {
     {
       $set: {
         group: group?._id,
+        isDissmiss: false
       },
     },
     {

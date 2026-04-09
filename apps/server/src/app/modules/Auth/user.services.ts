@@ -701,7 +701,7 @@ const resetPassword = async (resetToken: string, payload: IResetPasswordOtpType)
 }
 
 // 9. Changed password:
-const changedPassword = async (userInfo: IJwtUserPayload, payload: IChangedPasswordType) => {
+const changedPassword = async (userInfo: IUser, payload: IChangedPasswordType) => {
   const { newPassword, oldPassword } = payload
 
   // 1. Check is user exists with this id?:
