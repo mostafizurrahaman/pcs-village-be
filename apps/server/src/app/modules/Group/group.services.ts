@@ -8,14 +8,12 @@ import {
   MembershipStatus,
   UserProfile,
   type IUser,
-  type TGroupTabType,
   type TGroupType,
 } from 'packages/db/src'
 import { AppError, getPcsWindow } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
 import mongoose, { Types, type PipelineStage } from 'mongoose'
-import { logger } from '@app/libs/logger'
 import type { TGetUserAllGroupQuery } from './group.validtions'
 
 // 1. Find or create group:
@@ -280,7 +278,7 @@ const getAllGroups = async (user: IUser, query: TGetUserAllGroupQuery) => {
     'stationType',
   ]
 
-  if (query.tab === GroupTabs.SUGGESTED) {
+  if (tab === GroupTabs.SUGGESTED) {
     const suggestedPipeline: PipelineStage[] = [
       {
         $match: {
@@ -464,7 +462,7 @@ const getAllGroups = async (user: IUser, query: TGetUserAllGroupQuery) => {
     }
   }
 
-  if ([GroupTabs.ACTIVE, GroupTabs.ARCHIVED].includes(query?.tab as string)) {
+  if ([GroupTabs.ACTIVE, GroupTabs.ARCHIVED].includes(tab as string)) {
     pipeline.push({
       $lookup: {
         from: 'groupmembers',
@@ -568,7 +566,7 @@ const getAllGroups = async (user: IUser, query: TGetUserAllGroupQuery) => {
     })
   }
 
-  if (query.tab === GroupTabs.ACTIVE) {
+  if (tab === GroupTabs.ACTIVE) {
     pipeline.push({
       $match: {
         isActiveInGroup: true,
@@ -576,7 +574,7 @@ const getAllGroups = async (user: IUser, query: TGetUserAllGroupQuery) => {
     })
   }
 
-  if (query.tab === GroupTabs.ARCHIVED) {
+  if (tab === GroupTabs.ARCHIVED) {
     pipeline.push({
       $match: {
         isArchived: true,
