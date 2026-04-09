@@ -7,6 +7,7 @@ export interface IGroupMember {
   status: TMembershipStatus
   joinedAt: Date
   archivedAt?: Date
+  leavedAt?: Date
 }
 
 export interface IGroupMemberDoc extends IGroupMember, Document {}

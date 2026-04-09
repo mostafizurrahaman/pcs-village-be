@@ -23,4 +23,11 @@ router.get(
   groupControllers.getAllGroups
 )
 
+router.post(
+  '/leave/:id',
+  auth(AuthRoles.USER),
+  validateRequest(groupValidations.leaveGroup),
+  groupControllers.leaveGroupById
+)
+
 export const groupRoutes = router

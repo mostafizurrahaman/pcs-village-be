@@ -635,9 +635,38 @@ const getAllGroups = async (user: IUser, query: TGetUserAllGroupQuery) => {
   }
 }
 
+// 5. Leave from group
+const leaveGroup = async (user: IUser, groupId: string) => {
+  //  1. Find the member
+  const membership = await GroupMember.findOne({
+    user: user?._id,
+    group: groupId,
+    status: MembershipStatus.ACTIVE,
+  })
+
+  if (!membership) {
+    throw new AppError(httpStatus.NOT_FOUND, 'You are not an active member of this group.')
+  }
+
+  // 2. Update membership status:
+  membership.status = MembershipStatus.LEFT
+  membership.leavedAt = new Date()
+  await membership.save()
+
+  //3. Update Suggestion
+  await GroupSuggestion.findOneAndUpdate(
+    { user: user?._id, group: groupId },
+    { $set: { isDissmiss: true } },
+    { upsert: true }
+  )
+
+  return { message: 'Successfully left the group.' }
+}
+
 export const groupServices = {
   findOrCreateSuggestedGroup,
   joinGroup,
   markAsArrived,
   getAllGroups,
+  leaveGroup,
 }

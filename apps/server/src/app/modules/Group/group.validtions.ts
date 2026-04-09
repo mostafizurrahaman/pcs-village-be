@@ -38,10 +38,18 @@ const getUserAllGroups = z.object({
   }),
 })
 
+const leaveGroup = z.object({
+  params: z.object({
+    id: requiredString('Group ID'),
+  }),
+})
+
 export const groupValidations = {
   joinGroup,
   getUserAllGroups,
+  leaveGroup,
 }
 
 export type TJoinGroup = z.infer<typeof joinGroup.shape.params>
+export type TLeaveGroup = z.infer<typeof leaveGroup.shape.params>
 export type TGetUserAllGroupQuery = z.infer<typeof getUserAllGroups.shape.query>

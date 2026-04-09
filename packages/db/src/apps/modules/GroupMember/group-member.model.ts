@@ -27,6 +27,9 @@ const GroupMemberSchema = new Schema<IGroupMemberDoc>(
       default: Date.now(),
       required: true,
     },
+    leavedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

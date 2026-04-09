@@ -47,8 +47,23 @@ const getAllGroups = catchAsync(async (req, res) => {
   })
 })
 
+const leaveGroupById = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+  const id = req.params.id as string
+
+  const result = await groupServices.leaveGroup(user, id)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: `You have leaved the group successfully!`,
+    data: result,
+  })
+})
+
 export const groupControllers = {
   joinGroup,
   getAllGroups,
   markAsArrived,
+  leaveGroupById,
 }
