@@ -16,6 +16,11 @@ router.post(
 
 router.post('/mark-as-arrived', auth(AuthRoles.USER), groupControllers.markAsArrived)
 
-router.get('/all', auth(AuthRoles.USER), groupControllers.getAllGroups)
+router.get(
+  '/all',
+  auth(AuthRoles.USER),
+  validateRequest(groupValidations.getUserAllGroups),
+  groupControllers.getAllGroups
+)
 
 export const groupRoutes = router

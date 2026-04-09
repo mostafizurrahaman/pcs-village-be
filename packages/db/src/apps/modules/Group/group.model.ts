@@ -20,6 +20,7 @@ const GroupSchema = new Schema<IGroupDocuments>(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 )
 

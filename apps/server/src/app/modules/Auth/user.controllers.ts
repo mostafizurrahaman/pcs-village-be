@@ -3,6 +3,7 @@ import { AuthServices } from './user.services'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
 import { getUserFromRequest } from '@app/libs/get-user-from-requests'
+import { logger } from '@app/libs/logger'
 
 // 1. Sign up
 const signUp = catchAsync(async (req, res) => {
@@ -144,6 +145,7 @@ const getMe = catchAsync(async (req, res) => {
 const updateProfile = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
   const profileImage = req.file as Express.Multer.File
+  logger.info(profileImage)
 
   const result = await AuthServices.updateProfile(user?._id?.toString(), req.body, profileImage)
 

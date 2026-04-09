@@ -30,6 +30,7 @@ const GroupMemberSchema = new Schema<IGroupMemberDoc>(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 )
 

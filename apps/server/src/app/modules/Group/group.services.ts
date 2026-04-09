@@ -14,7 +14,9 @@ import {
 import { AppError, getPcsWindow } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
-import mongoose, { type PipelineStage } from 'mongoose'
+import mongoose, { Types, type PipelineStage } from 'mongoose'
+import { logger } from '@app/libs/logger'
+import type { TGetUserAllGroupQuery } from './group.validtions'
 
 // 1. Find or create group:
 const findOrCreateSuggestedGroup = async (payload: {
@@ -162,44 +164,57 @@ const joinGroup = async (user: IUser, groupId: string) => {
 
 // 3. MarkAsArrived:
 const markAsArrived = async (user: IUser) => {
-  // 1. Check is the user profile exists?:
+  // 1. Check is the user profile exists (Outside session is fine for read)
   const profile = await UserProfile.findOne({ user: user?._id })
-  if (!profile) {
-    throw new AppError(httpStatus.NOT_FOUND, `User profile doesn't exists!`)
-  }
+  if (!profile) throw new AppError(httpStatus.NOT_FOUND, `User profile doesn't exist!`)
 
-  // 2. Check future movement :
   if (!profile.futureStation || !profile.estimatedPcsDate) {
     throw new AppError(httpStatus.NOT_FOUND, `No future move found to mark as arrived.`)
   }
 
-  // 3. Early arrival restriction:
+  // 2. Early arrival restriction logic
   const today = new Date()
   const pcsDate = new Date(profile.estimatedPcsDate)
-  const timeDiff = pcsDate.getTime() - today.getTime()
-  const daysUntilPcs = timeDiff / (60 * 60 * 24 * 1000)
+  const daysUntilPcs = (pcsDate.getTime() - today.getTime()) / (60 * 60 * 24 * 1000)
+
   if (daysUntilPcs > 60) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      `It's too early to mark as arrived. Please wait until you are closer to your PCS date.`
-    )
+    throw new AppError(httpStatus.BAD_REQUEST, `Too early to mark as arrived.`)
   }
 
-  // 4. Exchange stations:
   const newCurrentStation = profile.futureStation
   const arrivalDate = new Date()
   const currentWindow = getPcsWindow(arrivalDate)
+
+  /**
+   * CRITICAL FIX: Find or Create the Group OUTSIDE the transaction.
+   * Since this is a shared document among many users, we don't want to lock it
+   * inside a multi-document transaction. findOneAndUpdate with upsert is atomic by itself.
+   */
+  const newCommerGroup = await Group.findOneAndUpdate(
+    {
+      station: newCurrentStation,
+      timeline: currentWindow,
+      type: GroupType.NEWCOMER,
+    },
+    {
+      $setOnInsert: {
+        station: newCurrentStation,
+        timeline: currentWindow,
+        type: GroupType.NEWCOMER,
+        createdAt: new Date(),
+      },
+    },
+    { upsert: true, new: true }
+  )
 
   const session = await mongoose.startSession()
 
   try {
     session.startTransaction()
 
-    // 5. update the profile with new information :
+    // 3. Update User Profile (User-specific, safe in transaction)
     await UserProfile.findOneAndUpdate(
-      {
-        user: user?._id,
-      },
+      { user: user?._id },
       {
         $set: {
           currentStation: newCurrentStation,
@@ -208,77 +223,45 @@ const markAsArrived = async (user: IUser) => {
           isArrived: true,
         },
       },
-      {
-        session,
-      }
+      { session }
     )
 
-    //6. Archive all previous active group:
+    // 4. Archive previous active groups
     await GroupMember.updateMany(
-      {
-        user: user?._id,
-        status: MembershipStatus.ACTIVE,
-      },
-      {
-        $set: {
-          status: MembershipStatus.ARCHIVED,
-          archivedAt: new Date(),
-        },
-      },
-      {
-        session,
-      }
+      { user: user?._id, status: MembershipStatus.ACTIVE },
+      { $set: { status: MembershipStatus.ARCHIVED, archivedAt: new Date() } },
+      { session }
     )
 
-    // 7. Find or create new Commer group:
-    const newCommerGroup = await Group.findOneAndUpdate(
-      {
-        station: newCurrentStation,
-        timeline: currentWindow,
-        type: GroupType.NEWCOMER,
-      },
-      {
-        $setOnInsert: {
-          station: newCurrentStation,
-          timeline: currentWindow,
-          type: GroupType.NEWCOMER,
-          createdAt: new Date(),
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-      }
-    )
-
-    // 8. Update user suggested group:
+    // 5. Update Group Suggestion (User-specific)
     await GroupSuggestion.findOneAndUpdate(
-      {
-        user: user?._id,
-      },
-      {
-        $set: {
-          group: newCommerGroup?._id,
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-      }
+      { user: user?._id },
+      { $set: { group: newCommerGroup?._id } },
+      { upsert: true, session }
     )
 
+    await session.commitTransaction()
     return {
       newStation: newCurrentStation,
       suggestedGroup: newCommerGroup,
     }
   } catch (error) {
-    console.log(error)
+    await session.abortTransaction()
+    console.error('Arrival Transaction Error:', error)
     throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, `Failed to mark as arrived!`)
+  } finally {
+    session.endSession()
   }
 }
 
 // 4. Get Groups based on tabs:
-const getAllGroups = async (user: IUser, query: Record<string, unknown>) => {
+const getAllGroups = async (user: IUser, query: TGetUserAllGroupQuery) => {
+  const { tab, page, limit, searchTerm, sortBy = 'createdAt', sortOrder = 'desc' } = query
+
+  const dataLimit = Number(limit) || 10
+  const dataPage = Number(page) || 1
+  const skip = (dataPage - 1) * dataLimit
+
   // 1. Check is the user profile exists?:
   const profile = await UserProfile.findOne({ user: user?._id })
   if (!profile) {
@@ -287,8 +270,18 @@ const getAllGroups = async (user: IUser, query: Record<string, unknown>) => {
 
   const pipeline: PipelineStage[] = []
 
+  // searchable fields:
+  const searchableFields = [
+    'groupName',
+    'stationName',
+    'stationCountry',
+    'stationCity',
+    'stationState',
+    'stationType',
+  ]
+
   if (query.tab === GroupTabs.SUGGESTED) {
-    const groups = await GroupSuggestion.aggregate([
+    const suggestedPipeline: PipelineStage[] = [
       {
         $match: {
           user: user?._id,
@@ -344,12 +337,11 @@ const getAllGroups = async (user: IUser, query: Record<string, unknown>) => {
           preserveNullAndEmptyArrays: true,
         },
       },
-
       {
         $project: {
           _id: '$groupDetails._id',
           type: '$groupDetails.type',
-          timeline: '$groupDetails.time',
+          timeline: '$groupDetails.timeline',
           groupName: {
             $concat: [
               '$groupDetails.station.name',
@@ -366,18 +358,282 @@ const getAllGroups = async (user: IUser, query: Record<string, unknown>) => {
           stationState: '$groupDetails.station.state',
           stationCountry: '$groupDetails.station.country',
           createdAt: '$groupDetails.createdAt',
-          members: '$groupDetails.members',
           totalMember: {
             $size: '$groupDetails.members',
           },
-          // TODO: Has to works for leave handling:
+
+          isAlreadyJoined: {
+            $cond: {
+              if: { $in: [new Types.ObjectId(user?._id), '$groupDetails.members.user'] },
+              then: true,
+              else: false,
+            },
+          },
+          isArchived: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: '$groupDetails.members',
+                    as: 'member',
+                    cond: {
+                      $and: [
+                        { $eq: ['$$member.user', new Types.ObjectId(user?._id)] },
+                        { $eq: ['$$member.status', MembershipStatus.ARCHIVED] },
+                      ],
+                    },
+                  },
+                },
+              },
+              0,
+            ],
+          },
+          isActiveInGroup: {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: '$groupDetails.members',
+                    as: 'member',
+                    cond: {
+                      $and: [
+                        { $eq: ['$$member.user', new Types.ObjectId(user?._id)] },
+                        { $eq: ['$$member.status', MembershipStatus.ACTIVE] },
+                      ],
+                    },
+                  },
+                },
+              },
+              0,
+            ],
+          },
         },
       },
-    ])
+    ]
 
-    return groups
+    if (searchTerm) {
+      suggestedPipeline.push({
+        $match: {
+          $or: searchableFields.map((field) => ({
+            [field]: {
+              $regex: searchTerm,
+              $options: 'i',
+            },
+          })),
+        },
+      })
+    }
 
-    console.log(groups)
+    suggestedPipeline.push({
+      $sort: {
+        [sortBy as string]: sortOrder !== 'desc' ? 1 : -1,
+      },
+    })
+
+    suggestedPipeline.push({
+      $facet: {
+        data: [
+          {
+            $skip: skip,
+          },
+          {
+            $limit: dataLimit,
+          },
+        ],
+        meta: [
+          {
+            $count: 'total',
+          },
+        ],
+      },
+    })
+
+    const groups = await GroupSuggestion.aggregate(suggestedPipeline)
+    const data = groups?.[0]?.data
+    const total = groups?.[0].meta?.[0]?.total
+    const totalPages = Math.ceil(total / dataLimit)
+
+    return {
+      data,
+      meta: {
+        page: dataPage,
+        limit: dataLimit,
+        total,
+        totalPages,
+      },
+    }
+  }
+
+  if ([GroupTabs.ACTIVE, GroupTabs.ARCHIVED].includes(query?.tab as string)) {
+    pipeline.push({
+      $lookup: {
+        from: 'groupmembers',
+        let: {
+          groupId: '$_id',
+        },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ['$$groupId', '$group'],
+              },
+            },
+          },
+        ],
+        as: 'members',
+      },
+    })
+
+    pipeline.push({
+      $lookup: {
+        from: 'dutystations',
+        localField: 'station',
+        foreignField: '_id',
+        as: 'station',
+        pipeline: [],
+      },
+    })
+
+    pipeline.push({
+      $unwind: {
+        path: '$station',
+        preserveNullAndEmptyArrays: true,
+      },
+    })
+
+    pipeline.push({
+      $project: {
+        _id: '$_id',
+        type: '$type',
+        timeline: '$timeline',
+        groupName: {
+          $concat: ['$station.name', ' - ', '$type', ' - ', '$timeline'],
+        },
+        stationId: '$station._id',
+        stationName: '$station.name',
+        stationCity: '$station.city',
+        stationType: '$station.type',
+        stationState: '$station.state',
+        stationCountry: '$station.country',
+        createdAt: '$createdAt',
+        totalMember: {
+          $size: '$members',
+        },
+        isAlreadyJoined: {
+          $cond: {
+            if: { $in: [new Types.ObjectId(user?._id), '$members.user'] },
+            then: true,
+            else: false,
+          },
+        },
+        isArchived: {
+          $gt: [
+            {
+              $size: {
+                $filter: {
+                  input: '$members',
+                  as: 'member',
+                  cond: {
+                    $and: [
+                      { $eq: ['$$member.user', new Types.ObjectId(user?._id)] },
+                      { $eq: ['$$member.status', MembershipStatus.ARCHIVED] },
+                    ],
+                  },
+                },
+              },
+            },
+            0,
+          ],
+        },
+        isActiveInGroup: {
+          $gt: [
+            {
+              $size: {
+                $filter: {
+                  input: '$members',
+                  as: 'member',
+                  cond: {
+                    $and: [
+                      { $eq: ['$$member.user', new Types.ObjectId(user?._id)] },
+                      { $eq: ['$$member.status', MembershipStatus.ACTIVE] },
+                    ],
+                  },
+                },
+              },
+            },
+            0,
+          ],
+        },
+      },
+    })
+  }
+
+  if (query.tab === GroupTabs.ACTIVE) {
+    pipeline.push({
+      $match: {
+        isActiveInGroup: true,
+      },
+    })
+  }
+
+  if (query.tab === GroupTabs.ARCHIVED) {
+    pipeline.push({
+      $match: {
+        isArchived: true,
+      },
+    })
+  }
+
+  if (searchTerm) {
+    pipeline.push({
+      $match: {
+        $or: searchableFields.map((field) => ({
+          [field]: {
+            $regex: searchTerm,
+            $options: 'i',
+          },
+        })),
+      },
+    })
+  }
+
+  pipeline.push({
+    $sort: {
+      [sortBy as string]: sortOrder !== 'desc' ? 1 : -1,
+    },
+  })
+
+  pipeline.push({
+    $facet: {
+      data: [
+        {
+          $skip: skip,
+        },
+        {
+          $limit: dataLimit,
+        },
+      ],
+      meta: [
+        {
+          $count: 'total',
+        },
+      ],
+    },
+  })
+
+  const groups = await Group.aggregate(pipeline)
+  const data = groups?.[0]?.data
+  const total = groups?.[0].meta?.[0]?.total
+  const totalPages = Math.ceil(total / dataLimit)
+
+  return {
+    data,
+    meta: {
+      page: dataPage,
+      limit: dataLimit,
+      total,
+      totalPages,
+    },
   }
 }
 

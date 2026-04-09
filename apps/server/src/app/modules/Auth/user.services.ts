@@ -801,6 +801,7 @@ const getMe = async (user: IUser) => {
         role: 1,
         isTwoFactorEnabled: 1,
         twoFactorBackupCodes: 1,
+        profileImage: 1,
         isOtpVerified: 1,
         createdAt: 1,
         updatedAt: 1,
@@ -936,6 +937,7 @@ const updateProfile = async (userId: string, payload: any, profileImage?: Expres
 
     return {
       profile: updatedProfile,
+
       suggestedGroupId: suggestedGroup?._id || null,
     }
   } catch (error: any) {
