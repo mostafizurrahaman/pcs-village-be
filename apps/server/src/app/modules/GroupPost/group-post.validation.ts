@@ -26,10 +26,18 @@ const updateGroupPost = z.object({
   }),
 })
 
+const getPostById = z.object({
+  params: z.object({
+    id: requiredString('Post ID'),
+  }),
+})
+
 export const groupPostValidations = {
   createPost,
   deleteGroupPostAttachmentById,
   updateGroupPost,
+  getPostById,
 }
 
 export type TCreateGroupPost = z.infer<typeof createPost.shape.body>
+export type TUpdateGroupPost = z.infer<typeof updateGroupPost.shape.body>

@@ -33,24 +33,24 @@ router.delete(
 )
 
 // // 3. Community Post Update:
-// router.patch(
-//   '/:id',
-//   auth(AuthRoles.USER),
-//   multerFactory({
-//     category: 'image',
-//     maxSizeInMB: 5,
-//   }).array('attachments', 5),
-//   validateRequest(communityPostValidations.updateCommunityPost),
-//   communityPostControllers.updateCommunityPost
-// )
+router.patch(
+  '/:id',
+  auth(AuthRoles.USER),
+  multerFactory({
+    category: 'image',
+    maxSizeInMB: 5,
+  }).array('attachments', 5),
+  validateRequest(groupPostValidations.updateGroupPost),
+  groupPostControllers.updateGroupPost
+)
 
 // // 4. Community Post GET (SINGLE):
-// router.get(
-//   '/:id',
-//   auth(AuthRoles.USER),
-//   validateRequest(communityPostValidations.getCommunityPostById),
-//   communityPostControllers.getCommunityPostById
-// )
+router.get(
+  '/:id',
+  auth(AuthRoles.USER),
+  validateRequest(groupPostValidations.getPostById),
+  groupPostControllers.getPostById
+)
 
 // // 5. Community Post DELETE (SINGLE):
 // router.delete(

@@ -36,35 +36,35 @@ const deleteGroupPostAttachment = catchAsync(async (req, res) => {
 })
 
 // // 3. Update Community Post:
-// const updateCommunityPost = catchAsync(async (req, res) => {
-//   const body = req.body
-//   const user = await getUserFromRequest(req)
-//   const files = req.files as Express.Multer.File[]
-//   const postId = req.params.id as string
+const updateGroupPost = catchAsync(async (req, res) => {
+  const body = req.body
+  const user = await getUserFromRequest(req)
+  const files = req.files as Express.Multer.File[]
+  const postId = req.params.id as string
 
-//   const result = await communityPostServices.updateCommunityPost(user, body, files, postId)
+  const result = await groupPostServices.updateGroupPost(user, body, files, postId)
 
-//   sendResponse(res, {
-//     success: true,
-//     statusCode: httpStatus.OK,
-//     message: 'The post has been updated successfully!',
-//     data: result,
-//   })
-// })
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'The post has been updated successfully!',
+    data: result,
+  })
+})
 
 // // 4. Get Community Post by id:
-// const getCommunityPostById = catchAsync(async (req, res) => {
-//   const postId = req.params.id as string
+const getPostById = catchAsync(async (req, res) => {
+  const postId = req.params.id as string
 
-//   const result = await communityPostServices.getPostById(postId)
+  const result = await groupPostServices.getPostById(postId)
 
-//   sendResponse(res, {
-//     success: true,
-//     statusCode: httpStatus.OK,
-//     message: 'The post is retrived successfully!',
-//     data: result,
-//   })
-// })
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'The post is retrived successfully!',
+    data: result,
+  })
+})
 
 // // 5. delete Post by id:
 // const deleteCommunityPostById = catchAsync(async (req, res) => {
@@ -100,8 +100,8 @@ const deleteGroupPostAttachment = catchAsync(async (req, res) => {
 export const groupPostControllers = {
   createGroupPost,
   deleteGroupPostAttachment,
-  //   updateCommunityPost,
-  //   getCommunityPostById,
+  updateGroupPost,
+  getPostById,
   //   deleteCommunityPostById,
   //   getUserCommunityPosts,
 }

@@ -6,7 +6,7 @@ import {
   UserProfile,
   type IUser,
 } from 'packages/db/src'
-import type { TCreateGroupPost } from './group-post.validation'
+import type { TCreateGroupPost, TUpdateGroupPost } from './group-post.validation'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import { deleteSingleFileFromS3, uploadMultipleFileToS3 } from 'packages/media-hub/src'
@@ -110,77 +110,74 @@ const deletePostAttachment = async (user: IUser, postId: string, url: string) =>
 }
 
 // // 3. Update Community post :
-// const MAX_ATTACHMENTS = 5
+const MAX_ATTACHMENTS = 5
 
-// const updateCommunityPost = async (
-//   user: IUser,
-//   data: TCreateCommunityPayload,
-//   files: Express.Multer.File[],
-//   postId: string
-// ) => {
-//   const { content } = data
+const updateGroupPost = async (
+  user: IUser,
+  data: TUpdateGroupPost,
+  files: Express.Multer.File[],
+  postId: string
+) => {
+  const { content } = data
 
-//   // 1. Check post
-//   const existingPost = await CommunityPost.findOne({
-//     _id: postId,
-//     author: user?._id,
-//   })
-//   if (!existingPost) {
-//     throw new AppError(httpStatus.NOT_FOUND, `Post doesn't exist!`)
-//   }
+  // 1. Check post
+  const existingPost = await GroupPost.findOne({
+    _id: postId,
+    author: user?._id,
+  })
+  if (!existingPost) {
+    throw new AppError(httpStatus.NOT_FOUND, `Post doesn't exist!`)
+  }
 
-//   // 2. Profile
-//   const profile = await UserProfile.findOne({ user: user?._id })
-//   if (!profile) {
-//     throw new AppError(httpStatus.NOT_FOUND, 'Profile not found!')
-//   }
+  // 2. Check the user is active member of this group?:
+  const membership = await GroupMember.findOne({
+    user: user?._id,
+    group: existingPost?.group,
+    status: MembershipStatus.ACTIVE,
+  })
 
-//   // 3. Station check (optimized)
-//   const stationExists = await DutyStation.exists({
-//     _id: profile.currentStation,
-//   })
-//   if (!stationExists) {
-//     throw new AppError(httpStatus.NOT_FOUND, `Current station doesn't exist!`)
-//   }
+  if (!membership) {
+    throw new AppError(httpStatus.BAD_REQUEST, `You aren't an active member of this group!`)
+  }
 
-//   // 4. Attachment validation
-//   const existingAttachments = existingPost.attachments || []
-//   if (files.length + existingAttachments.length > MAX_ATTACHMENTS) {
-//     throw new AppError(
-//       httpStatus.BAD_REQUEST,
-//       `You can upload up to ${MAX_ATTACHMENTS} attachments!`
-//     )
-//   }
+  // 4. Attachment validation
+  const existingAttachments = existingPost.attachments || []
+  if (files.length + existingAttachments.length > MAX_ATTACHMENTS) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `You can upload up to ${MAX_ATTACHMENTS} attachments!`
+    )
+  }
 
-//   // 5. Upload new files (if any)
-//   let newAttachments: string[] = []
+  // 5. Upload new files (if any)
+  let newAttachments: string[] = []
 
-//   if (files.length > 0) {
-//     const uploadedFiles = await uploadMultipleFileToS3(files, 'communityPosts')
-//     newAttachments = uploadedFiles.map((f) => f.url)
-//   }
+  if (files.length > 0) {
+    const uploadedFiles = await uploadMultipleFileToS3(files, 'communityPosts')
+    newAttachments = uploadedFiles.map((f) => f.url)
+  }
 
-//   // 6. Update fields
-//   existingPost.content = content ?? existingPost.content
+  // 6. Update fields
+  existingPost.content = content ?? existingPost.content
 
-//   if (files.length > 0) {
-//     existingPost.attachments = [...existingAttachments, ...newAttachments]
-//   }
+  if (files.length > 0) {
+    existingPost.attachments = [...existingAttachments, ...newAttachments]
+  }
 
-//   await existingPost.save()
+  await existingPost.save()
 
-//   return existingPost
-// }
+  return existingPost
+}
 
 // // 4. Get post by id:
-// const getPostById = async (postId: string) => {
-//   const post = await CommunityPost.findById(postId)
+const getPostById = async (postId: string) => {
+  const post = await GroupPost.findById(postId)
 
-//   if (!post) {
-//     throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
-//   }
-//   return post
-// }
+  if (!post) {
+    throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
+  }
+  return post
+}
 
 // // 5. delete post by id:
 // const deletePostById = async (user: IUser, postId: string) => {
@@ -516,8 +513,8 @@ const deletePostAttachment = async (user: IUser, postId: string, url: string) =>
 export const groupPostServices = {
   createGroupPost,
   deletePostAttachment,
-  //   updateCommunityPost,
+  updateGroupPost,
+  getPostById,
   //   deletePostById,
-  //   getPostById,
   //   getUserCommunityPostsByUserId,
 }
