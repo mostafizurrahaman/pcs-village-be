@@ -2,7 +2,7 @@ import {
   CommunityComment,
   CommunityPost,
   DutyStation,
-  PostLike,
+  GroupPostLike,
   UserProfile,
   type IUser,
 } from '@repo/db'
@@ -205,7 +205,7 @@ const deletePostById = async (user: IUser, postId: string) => {
     await CommunityComment.deleteMany({ post: postId }, { session })
 
     // 5. Delete related likes from Database
-    await PostLike.deleteMany({ post: postId }, { session })
+    await GroupPostLike.deleteMany({ post: postId }, { session })
 
     // 6. Delete the Post itself from Database
     const deletedPost = await CommunityPost.findByIdAndDelete(postId, { session })

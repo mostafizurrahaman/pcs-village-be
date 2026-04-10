@@ -7,6 +7,8 @@ import { DutyStationRoutes } from '@app/modules/DutyStation/duty-station.routes'
 import { faqRoutes } from '@app/modules/Faq/faq.routes'
 import { groupRoutes } from '@app/modules/Group/group.routes'
 import { groupPostRoutes } from '@app/modules/GroupPost/group-post.routes'
+import { groupCommentRoutes } from '@app/modules/GroupPostComment/group-post-comment.routes'
+import { groupPostLikeRoutes } from '@app/modules/GroupPostLike/post-like.routes'
 import { communityLikeRoutes } from '@app/modules/PostLike/post-like.routes'
 import express, { Router } from 'express'
 
@@ -52,6 +54,14 @@ const routes = [
   {
     path: '/group/posts',
     route: groupPostRoutes,
+  },
+  {
+    path: '/group-comments',
+    route: groupCommentRoutes,
+  },
+  {
+    path: '/group-likes',
+    route: groupPostLikeRoutes,
   },
 ]
 

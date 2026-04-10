@@ -9,6 +9,6 @@
       "@app/*": ["apps/server/src/app/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/app/interfaces/express/index.d.ts"],
+  "include": ["src/**/*.ts", "src/app/interfaces/express/index.d.ts", "../../packages/db/src/apps/modules/GroupPostComment/group-comment.interface.ts", "../../packages/db/src/apps/modules/GroupPostComment/group-comment.model.ts", "../../packages/db/src/apps/modules/GroupPostComment/index.ts"],
   "exclude": ["node_modules", "dist", "**/*.js", "**/*.js.map", "**/*.d.ts", "**/*.d.ts.map"]
 }
