@@ -170,7 +170,7 @@ const deleteComment = async (user: IUser, commentId: string) => {
     group: comment?.post?.group,
     status: MembershipStatus.ACTIVE,
   })
-  
+
   if (!membership) {
     throw new AppError(httpStatus.BAD_REQUEST, `You don't have active membership into this group!`)
   }
@@ -211,7 +211,7 @@ const deleteComment = async (user: IUser, commentId: string) => {
     }
 
     return { deletedCount: allCommentIds.length }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     // Rollback DB changes if any error occurs during the transaction
     await session.abortTransaction()

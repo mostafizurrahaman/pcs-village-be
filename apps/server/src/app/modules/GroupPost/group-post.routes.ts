@@ -22,7 +22,7 @@ router.post(
 )
 
 // // 6. Get all the post  for the user (Current and future stations)
-// router.get('/relevant', auth(AuthRoles.USER), communityPostControllers.getUserCommunityPosts)
+router.get('/all', auth(AuthRoles.USER), groupPostControllers.getUserGroupPosts)
 
 // // 2. Group Post Delete Attachments:
 router.delete(

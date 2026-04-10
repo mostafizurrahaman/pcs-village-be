@@ -65,7 +65,7 @@ const findOrCreateSuggestedGroup = async (payload: {
     {
       $set: {
         group: group?._id,
-        isDissmiss: false
+        isDissmiss: false,
       },
     },
     {
@@ -622,7 +622,7 @@ const getAllGroups = async (user: IUser, query: TGetUserAllGroupQuery) => {
 
   const groups = await Group.aggregate(pipeline)
   const data = groups?.[0]?.data
-  const total = groups?.[0].meta?.[0]?.total
+  const total = groups?.[0].meta?.[0]?.total || 0
   const totalPages = Math.ceil(total / dataLimit)
 
   return {

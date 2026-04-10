@@ -6,10 +6,15 @@ import {
   UserProfile,
   type IUser,
 } from 'packages/db/src'
-import type { TCreateGroupPost, TUpdateGroupPost } from './group-post.validation'
+import type {
+  TCreateGroupPost,
+  TGetAllGroupPostsQuery,
+  TUpdateGroupPost,
+} from './group-post.validation'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import { deleteSingleFileFromS3, uploadMultipleFileToS3 } from 'packages/media-hub/src'
+import { Types, type PipelineStage } from 'mongoose'
 
 // 1. create Community post :
 const createGroupPost = async (
@@ -243,278 +248,296 @@ const getPostById = async (postId: string) => {
 // }
 
 // // 6. Get all post relevant to me in my community:
-// const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommunityPostQuery) => {
-//   const {
-//     fromDate,
-//     toDate,
-//     searchTerm,
-//     sortBy = 'createdAt',
-//     sortOrder = 'desc',
-//     limit = 10,
-//     page = 1,
-//   } = query
+const getUserGroupPostsByUserId = async (user: IUser, query: TGetAllGroupPostsQuery) => {
+  const {
+    group: groupId,
+    fromDate,
+    toDate,
+    searchTerm,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    limit = 10,
+    page = 1,
+  } = query
 
-//   const dataLimit = Number(limit)
-//   const skip = (Number(page) - 1) * dataLimit
+  const dataLimit = Number(limit)
+  const skip = (Number(page) - 1) * dataLimit
 
-//   // 1. Check the user and get user profile:
-//   const profile = await UserProfile.findOne({
-//     user: user?._id,
-//   })
-//   if (!profile) {
-//     throw new AppError(httpStatus.NOT_FOUND, 'Profile not found!')
-//   }
+  // 1. Check the user and get user profile:
+  const profile = await UserProfile.findOne({
+    user: user?._id,
+  })
+  if (!profile) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Profile not found!')
+  }
 
-//   const stationIds = []
-//   // 2. Check current station exists?:
-//   const currentStation = await DutyStation.findById(profile.currentStation)
-//   if (!currentStation) {
-//     throw new AppError(httpStatus.NOT_FOUND, `Current station doesn't exists!`)
-//   }
-//   stationIds.push(currentStation?._id)
+  // 2. Check is this group exists ?:
+  const group = await Group.findById(groupId)
+  if (!group) {
+    throw new AppError(httpStatus.NOT_FOUND, `Group doesn't exists!`)
+  }
 
-//   // 3. Check current station exists?:
-//   let futureStation = null
-//   if (profile.futureStation) {
-//     futureStation = await DutyStation.findById(profile.futureStation)
-//     if (!futureStation) {
-//       throw new AppError(httpStatus.NOT_FOUND, `Future station doesn't exists!`)
-//     }
-//   }
-//   stationIds.push(futureStation?._id)
+  // 3. Check is the user member of this group? :
+  const membership = await GroupMember.findOne({
+    group: group?._id,
+    user: user?._id,
+  })
 
-//   const pipeline: PipelineStage[] = []
+  if (!membership || membership?.status === 'LEFT') {
+    throw new AppError(httpStatus.BAD_REQUEST, `You don't have access in this group!`)
+  }
 
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   const matchingStage: PipelineStage = {
-//     $match: {
-//       station: {
-//         $in: stationIds,
-//       },
-//     },
-//   }
+  const pipeline: PipelineStage[] = []
 
-//   if (fromDate || toDate) {
-//     const dateFilter: Record<string, Date> = {}
-//     if (fromDate) {
-//       dateFilter.$gte = new Date(fromDate)
-//     }
-//     if (toDate) {
-//       dateFilter.$lte = new Date(toDate)
-//     }
-//     matchingStage.$match.createdAt = dateFilter
-//   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const matchingStage: PipelineStage = {
+    $match: {
+      group: group?._id,
+    },
+  }
 
-//   pipeline.push(matchingStage)
+  if (membership?.status === MembershipStatus.ACTIVE) {
+    pipeline.push({
+      $match: {
+        createdAt: {
+          $gte: new Date(membership.joinedAt),
+        },
+      },
+    })
+  }
 
-//   // prepare station lookup :
-//   pipeline.push({
-//     $lookup: {
-//       from: 'dutystations',
-//       localField: 'station',
-//       foreignField: '_id',
-//       as: 'station',
-//     },
-//   })
+  if (membership?.status === MembershipStatus.ARCHIVED) {
+    pipeline.push({
+      $match: {
+        createdAt: {
+          $gte: new Date(membership.joinedAt),
+          $lte: new Date(membership.archivedAt as Date),
+        },
+      },
+    })
+  }
 
-//   pipeline.push({
-//     $unwind: {
-//       path: '$station',
-//       preserveNullAndEmptyArrays: true,
-//     },
-//   })
+  if (fromDate || toDate) {
+    const dateFilter: Record<string, Date> = {}
+    if (fromDate) {
+      dateFilter.$gte = new Date(fromDate)
+    }
+    if (toDate) {
+      dateFilter.$lte = new Date(toDate)
+    }
+    matchingStage.$match.createdAt = dateFilter
+  }
 
-//   // prepare station lookup :
-//   pipeline.push({
-//     $lookup: {
-//       from: 'users',
-//       localField: 'author',
-//       foreignField: '_id',
-//       as: 'author',
-//       pipeline: [
-//         {
-//           $lookup: {
-//             from: 'userprofiles',
-//             let: {
-//               userId: '$_id',
-//             },
-//             pipeline: [
-//               {
-//                 $match: {
-//                   $expr: {
-//                     $eq: ['$$userId', '$user'],
-//                   },
-//                 },
-//               },
-//             ],
-//             as: 'profile',
-//           },
-//         },
-//         {
-//           $unwind: {
-//             path: '$profile',
-//             preserveNullAndEmptyArrays: true,
-//           },
-//         },
-//         {
-//           $project: {
-//             password: 0,
-//             twoFactorBackupCodes: 0,
-//           },
-//         },
-//       ],
-//     },
-//   })
+  pipeline.push(matchingStage)
 
-//   pipeline.push({
-//     $unwind: {
-//       path: '$author',
-//       preserveNullAndEmptyArrays: true,
-//     },
-//   })
+  // prepare station lookup :
+  pipeline.push({
+    $lookup: {
+      from: 'groups',
+      localField: 'group',
+      foreignField: '_id',
+      as: 'group',
+    },
+  })
 
-//   pipeline.push({
-//     $lookup: {
-//       from: 'communitycomments',
-//       let: {
-//         postId: '$_id',
-//       },
-//       pipeline: [
-//         {
-//           $match: {
-//             $expr: {
-//               $eq: ['$$postId', '$post'],
-//             },
-//           },
-//         },
-//       ],
-//       as: 'comments',
-//     },
-//   })
+  pipeline.push({
+    $unwind: {
+      path: '$group',
+      preserveNullAndEmptyArrays: true,
+    },
+  })
 
-//   pipeline.push({
-//     $lookup: {
-//       from: 'postlikes',
-//       let: {
-//         postId: '$_id',
-//       },
-//       pipeline: [
-//         {
-//           $match: {
-//             $expr: {
-//               $eq: ['$$postId', '$post'],
-//             },
-//           },
-//         },
-//       ],
-//       as: 'likes',
-//     },
-//   })
+  pipeline.push({
+    $addFields: {
+      isAuthor: {
+        $eq: ['$author', new Types.ObjectId(user._id)],
+      },
+    },
+  })
 
-//   // Final projection
-//   pipeline.push({
-//     $project: {
-//       _id: 1,
-//       content: 1,
-//       attachments: 1,
+  // prepare author lookup :
+  pipeline.push({
+    $lookup: {
+      from: 'users',
+      localField: 'author',
+      foreignField: '_id',
+      as: 'author',
+      pipeline: [
+        {
+          $lookup: {
+            from: 'userprofiles',
+            let: {
+              userId: '$_id',
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$$userId', '$user'],
+                  },
+                },
+              },
+            ],
+            as: 'profile',
+          },
+        },
+        {
+          $unwind: {
+            path: '$profile',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            password: 0,
+            twoFactorBackupCodes: 0,
+          },
+        },
+      ],
+    },
+  })
 
-//       // Flatten author
-//       authorId: '$author._id',
-//       authorName: '$author.name',
-//       authorEmail: '$author.email',
-//       authorStatus: '$author.status',
-//       authorRole: '$author.role',
-//       authorImage: '$author.profileImage',
-//       affiliation: '$author.profile.affiliation',
-//       // Flatten station
-//       stationId: '$station._id',
-//       stationName: '$station.name',
-//       stationCountry: '$station.country',
-//       stationState: '$station.state',
-//       stationCity: '$station.city',
-//       stationType: '$station.type',
-//       comments: {
-//         $size: '$comments',
-//       },
-//       likes: {
-//         $size: '$likes',
-//       },
+  pipeline.push({
+    $unwind: {
+      path: '$author',
+      preserveNullAndEmptyArrays: true,
+    },
+  })
 
-//       // timestamps
-//       createdAt: 1,
-//       updatedAt: 1,
-//     },
-//   })
+  pipeline.push({
+    $lookup: {
+      from: 'grouppostcomments',
+      let: {
+        postId: '$_id',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: ['$$postId', '$post'],
+            },
+          },
+        },
+      ],
+      as: 'comments',
+    },
+  })
 
-//   // searchable fields:
-//   const searchableFields = [
-//     'authorName',
-//     'authorEmail',
-//     'stationName',
-//     'stationCountry',
-//     'stationCity',
-//     'stationType',
-//     'content',
-//   ]
+  pipeline.push({
+    $lookup: {
+      from: 'grouppostlikes',
+      let: {
+        postId: '$_id',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: ['$$postId', '$post'],
+            },
+          },
+        },
+      ],
+      as: 'likes',
+    },
+  })
 
-//   if (searchTerm) {
-//     pipeline.push({
-//       $match: {
-//         $or: searchableFields.map((field) => {
-//           return { [field]: { $regex: searchTerm, $options: 'i' } }
-//         }),
-//       },
-//     })
-//   }
+  // // Final projection
+  pipeline.push({
+    $project: {
+      _id: 1,
+      content: 1,
+      attachments: 1,
 
-//   // sorting:
-//   pipeline.push({
-//     $sort: {
-//       [sortBy]: sortOrder === 'asc' ? 1 : -1,
-//     },
-//   })
+      // Flatten author
+      authorId: '$author._id',
 
-//   pipeline.push({
-//     $facet: {
-//       data: [
-//         {
-//           $skip: skip,
-//         },
-//         {
-//           $limit: dataLimit,
-//         },
-//       ],
-//       meta: [
-//         {
-//           $count: 'total',
-//         },
-//       ],
-//     },
-//   })
+      authorName: '$author.name',
+      authorEmail: '$author.email',
+      authorStatus: '$author.status',
+      authorRole: '$author.role',
+      authorImage: '$author.profileImage',
+      affiliation: '$author.profile.affiliation',
+      // Flatten station
+      groupId: '$group._id',
+      groupType: '$group.type',
+      groupTimeline: '$group.timeline',
 
-//   // 4. Run Aggregation :
-//   const posts = await CommunityPost.aggregate(pipeline)
+      comments: {
+        $size: '$comments',
+      },
+      likes: {
+        $size: '$likes',
+      },
+      isAuthor: 1,
 
-//   const data = posts[0].data
-//   const total = posts[0]?.meta[0]?.total || 0
-//   const totalPages = Math.ceil(total / limit)
+      // timestamps
+      createdAt: 1,
+      updatedAt: 1,
+    },
+  })
 
-//   return {
-//     data,
-//     meta: {
-//       page: Number(page),
-//       limit: dataLimit,
-//       total,
-//       totalPages,
-//     },
-//   }
-// }
+  //  searchable fields:
+  const searchableFields = ['authorName', 'authorEmail', 'content']
+
+  if (searchTerm) {
+    pipeline.push({
+      $match: {
+        $or: searchableFields.map((field) => {
+          return { [field]: { $regex: searchTerm, $options: 'i' } }
+        }),
+      },
+    })
+  }
+
+  // // sorting:
+  pipeline.push({
+    $sort: {
+      [sortBy]: sortOrder === 'asc' ? 1 : -1,
+    },
+  })
+
+  pipeline.push({
+    $facet: {
+      data: [
+        {
+          $skip: skip,
+        },
+        {
+          $limit: dataLimit,
+        },
+      ],
+      meta: [
+        {
+          $count: 'total',
+        },
+      ],
+    },
+  })
+
+  // 4. Run Aggregation :
+  const posts = await GroupPost.aggregate(pipeline)
+
+  const data = posts[0].data
+  const total = posts[0]?.meta[0]?.total || 0
+  const totalPages = Math.ceil(total / limit)
+
+  return {
+    data,
+    meta: {
+      page: Number(page),
+      limit: dataLimit,
+      total,
+      totalPages,
+    },
+  }
+}
 
 export const groupPostServices = {
   createGroupPost,
   deletePostAttachment,
   updateGroupPost,
   getPostById,
-  //   deletePostById,
-  //   getUserCommunityPostsByUserId,
+  getUserGroupPostsByUserId,
+  // deletePostById,
 }

@@ -3,6 +3,7 @@ import { catchAsync, sendResponse } from '@repo/shared'
 
 import httpStatus from 'http-status'
 import { groupPostServices } from './group-post.services'
+import type { TGetAllGroupPostsQuery } from './group-post.validation'
 
 // 1. Create Community Post:
 const createGroupPost = catchAsync(async (req, res) => {
@@ -81,21 +82,21 @@ const getPostById = catchAsync(async (req, res) => {
 //   })
 // })
 
-// // 5. delete Post by id:
-// const getUserCommunityPosts = catchAsync(async (req, res) => {
-//   const query = req.query as unknown as TGetUserCommunityPostQuery
-//   const user = await getUserFromRequest(req)
+// // 5. get user all post for group:
+const getUserGroupPosts = catchAsync(async (req, res) => {
+  const query = req.query as unknown as TGetAllGroupPostsQuery
+  const user = await getUserFromRequest(req)
 
-//   const result = await communityPostServices.getUserCommunityPostsByUserId(user, query)
+  const result = await groupPostServices.getUserGroupPostsByUserId(user, query)
 
-//   sendResponse(res, {
-//     success: true,
-//     statusCode: httpStatus.OK,
-//     message: 'All community posts are retrived successfully!',
-//     data: result.data,
-//     meta: result.meta,
-//   })
-// })
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'All group posts are retrived successfully!',
+    data: result.data,
+    meta: result.meta,
+  })
+})
 
 export const groupPostControllers = {
   createGroupPost,
@@ -103,5 +104,5 @@ export const groupPostControllers = {
   updateGroupPost,
   getPostById,
   //   deleteCommunityPostById,
-  //   getUserCommunityPosts,
+  getUserGroupPosts,
 }
