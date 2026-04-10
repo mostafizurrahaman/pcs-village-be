@@ -3,6 +3,7 @@ import httpStatus from 'http-status'
 
 import { getUserFromRequest } from '@app/libs/get-user-from-requests'
 import { GroupCommentServices } from './group-post-comment.services'
+import type { TGetAllCommentsByPostIdQuery } from './group-post-comment.validations'
 
 const createComment = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
@@ -18,7 +19,10 @@ const createComment = catchAsync(async (req, res) => {
 })
 
 const getCommentsByPostId = catchAsync(async (req, res) => {
-  const result = await GroupCommentServices.getAllCommentsByPostID(req.params.postId as string, req.query)
+  const result = await GroupCommentServices.getAllCommentsByPostID(
+    req.params.postId as string,
+    req.query as unknown as TGetAllCommentsByPostIdQuery
+  )
 
   sendResponse(res, {
     success: true,

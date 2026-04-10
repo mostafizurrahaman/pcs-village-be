@@ -44,7 +44,7 @@ router.patch(
   groupPostControllers.updateGroupPost
 )
 
-// // 4. Community Post GET (SINGLE):
+// 4. Community Post GET (SINGLE):
 router.get(
   '/:id',
   auth(AuthRoles.USER),
@@ -52,12 +52,12 @@ router.get(
   groupPostControllers.getPostById
 )
 
-// // 5. Community Post DELETE (SINGLE):
-// router.delete(
-//   '/:id',
-//   auth(AuthRoles.USER),
-//   validateRequest(communityPostValidations.deleteCommunityPostById),
-//   communityPostControllers.deleteCommunityPostById
-// )
+// 5. Community Post DELETE (SINGLE):
+router.delete(
+  '/:id',
+  auth(AuthRoles.USER),
+  validateRequest(groupPostValidations.deletePostById),
+  groupPostControllers.deletePostById
+)
 
 export const groupPostRoutes = router

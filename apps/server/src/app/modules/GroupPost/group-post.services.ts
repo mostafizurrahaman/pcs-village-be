@@ -2,6 +2,8 @@ import {
   Group,
   GroupMember,
   GroupPost,
+  GroupPostComment,
+  GroupPostLike,
   MembershipStatus,
   UserProfile,
   type IUser,
@@ -13,8 +15,13 @@ import type {
 } from './group-post.validation'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
-import { deleteSingleFileFromS3, uploadMultipleFileToS3 } from 'packages/media-hub/src'
-import { Types, type PipelineStage } from 'mongoose'
+import {
+  deleteMultipleFilesFromS3,
+  deleteSingleFileFromS3,
+  uploadMultipleFileToS3,
+} from 'packages/media-hub/src'
+import mongoose, { Types, type PipelineStage } from 'mongoose'
+import { logger } from '@app/libs/logger'
 
 // 1. create Community post :
 const createGroupPost = async (
@@ -533,11 +540,83 @@ const getUserGroupPostsByUserId = async (user: IUser, query: TGetAllGroupPostsQu
   }
 }
 
+const deletePostById = async (user: IUser, postId: string) => {
+  const session = await mongoose.startSession()
+
+  try {
+    session.startTransaction()
+
+    // 1. Check if post exists
+    const existingPost = await GroupPost.findById(postId).session(session)
+
+    if (!existingPost) {
+      throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
+    }
+
+    // 2. Authorization check
+    if (existingPost.author?.toString() !== user?._id?.toString()) {
+      throw new AppError(httpStatus.FORBIDDEN, `You are not allowed to delete this post.`)
+    }
+
+    // 3. check membership:
+    const membership = await GroupMember.findOne({
+      user: user?._id,
+      group: existingPost?.group,
+      status: MembershipStatus.ACTIVE,
+    })
+    if (!membership) {
+      throw new AppError(httpStatus.BAD_REQUEST, `You aren't active member of this group.!`)
+    }
+
+    // 4. COLLECT ALL COMMENT ATTACHMENTS BEFORE DELETING FROM DB
+    // Fetch only the attachments field from all comments related to this post
+    const commentsWithFiles = await GroupPostComment.find(
+      { post: postId, attachments: { $exists: true, $not: { $size: 0 } } },
+      { attachments: 1 }
+    ).session(session)
+
+    // Flatten the array of arrays into a single list of S3 URLs/Keys
+    const allCommentAttachments = commentsWithFiles.reduce((acc, curr) => {
+      return [...acc, ...(curr.attachments || [])]
+    }, [] as string[])
+
+    // 4. Delete related comments from Database
+    await GroupPostComment.deleteMany({ post: postId }, { session })
+
+    // 5. Delete related likes from Database
+    await GroupPostLike.deleteMany({ post: postId }, { session })
+
+    // 6. Delete the Post itself from Database
+    const deletedPost = await GroupPost.findByIdAndDelete(postId, { session })
+
+    // 7. Commit DB changes
+    await session.commitTransaction()
+    session.endSession()
+
+    // 8. CLEANUP S3 (External Service)
+    // Combine post attachments and comment attachments for a single S3 cleanup call
+    const filesToDelete = [...(existingPost.attachments || []), ...allCommentAttachments]
+
+    if (filesToDelete.length > 0) {
+      // It's better to filter for unique values if a file might be referenced twice
+      const uniqueFiles = [...new Set(filesToDelete)]
+      logger.info('uniqueFiles', uniqueFiles)
+      await deleteMultipleFilesFromS3(uniqueFiles)
+    }
+
+    return deletedPost
+  } catch (error) {
+    await session.abortTransaction()
+    session.endSession()
+    throw error
+  }
+}
+
 export const groupPostServices = {
   createGroupPost,
   deletePostAttachment,
   updateGroupPost,
   getPostById,
   getUserGroupPostsByUserId,
-  // deletePostById,
+  deletePostById,
 }

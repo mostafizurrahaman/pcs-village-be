@@ -10,7 +10,7 @@ import { AppError } from '@repo/shared'
 import httpStatus from 'http-status'
 import mongoose, { Types } from 'mongoose'
 import { deleteMultipleFilesFromS3, uploadMultipleFileToS3 } from '@repo/media-hub'
-import type { TCreateGroupCommentPayload } from './group-post-comment.validations'
+import type { TCreateGroupCommentPayload, TGetAllCommentsByPostIdQuery } from './group-post-comment.validations'
 
 const createComment = async (
   user: IUser,
@@ -62,9 +62,15 @@ const createComment = async (
   return comment
 }
 
-const getAllCommentsByPostID = async (postId: string, query: any) => {
+const getAllCommentsByPostID = async (postId: string, query: TGetAllCommentsByPostIdQuery) => {
   const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = query
   const skip = (Number(page) - 1) * Number(limit)
+
+  //  1. check is the post exists ? :
+  const post = await GroupPost.findById(postId)
+  if (!post) {
+    throw new AppError(httpStatus.NOT_FOUND, `Post doesn't exists!`)
+  }
 
   const comments = await GroupPostComment.aggregate([
     { $match: { post: new Types.ObjectId(postId) } },

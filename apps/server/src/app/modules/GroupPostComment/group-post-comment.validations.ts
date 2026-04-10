@@ -30,3 +30,4 @@ export const GroupCommentValidations = {
 }
 
 export type TCreateGroupCommentPayload = z.infer<typeof createComment.shape.body>
+export type TGetAllCommentsByPostIdQuery = z.infer<typeof getAllCommentsByPostId.shape.query>

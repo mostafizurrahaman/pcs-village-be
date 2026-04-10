@@ -67,22 +67,22 @@ const getPostById = catchAsync(async (req, res) => {
   })
 })
 
-// // 5. delete Post by id:
-// const deleteCommunityPostById = catchAsync(async (req, res) => {
-//   const postId = req.params.id as string
-//   const user = await getUserFromRequest(req)
+// 5. delete Post by id:
+const deletePostById = catchAsync(async (req, res) => {
+  const postId = req.params.id as string
+  const user = await getUserFromRequest(req)
 
-//   const result = await communityPostServices.deletePostById(user, postId)
+  const result = await groupPostServices.deletePostById(user, postId)
 
-//   sendResponse(res, {
-//     success: true,
-//     statusCode: httpStatus.OK,
-//     message: 'The post is deleted successfully!',
-//     data: result,
-//   })
-// })
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'The post is deleted successfully!',
+    data: result,
+  })
+})
 
-// // 5. get user all post for group:
+// 6. get user all post for group:
 const getUserGroupPosts = catchAsync(async (req, res) => {
   const query = req.query as unknown as TGetAllGroupPostsQuery
   const user = await getUserFromRequest(req)
@@ -103,6 +103,6 @@ export const groupPostControllers = {
   deleteGroupPostAttachment,
   updateGroupPost,
   getPostById,
-  //   deleteCommunityPostById,
+  deletePostById,
   getUserGroupPosts,
 }

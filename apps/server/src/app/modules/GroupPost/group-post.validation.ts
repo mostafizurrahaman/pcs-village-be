@@ -1,4 +1,3 @@
-import { communityPostSortableFields } from 'packages/db/src'
 import {
   optionalDate,
   optionalEnumString,
@@ -40,6 +39,12 @@ const getPostById = z.object({
   }),
 })
 
+const deletePostById = z.object({
+  params: z.object({
+    id: requiredString('Post ID'),
+  }),
+})
+
 const getAllGroupPosts = z.object({
   query: z.object({
     group: requiredString('Group ID'),
@@ -59,8 +64,10 @@ export const groupPostValidations = {
   updateGroupPost,
   getPostById,
   getAllGroupPosts,
+  deletePostById,
 }
 
 export type TCreateGroupPost = z.infer<typeof createPost.shape.body>
 export type TUpdateGroupPost = z.infer<typeof updateGroupPost.shape.body>
 export type TGetAllGroupPostsQuery = z.infer<typeof getAllGroupPosts.shape.query>
+export type TDeletePostByIDParams = z.infer<typeof deletePostById.shape.params>
