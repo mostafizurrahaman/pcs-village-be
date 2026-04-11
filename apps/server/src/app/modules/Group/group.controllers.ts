@@ -61,9 +61,25 @@ const leaveGroupById = catchAsync(async (req, res) => {
   })
 })
 
+const getGroupAllMembers = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+  const groupId = req.params.id as string
+  const query = req.query as Record<string, unknown>
+
+  const result = await groupServices.getAllGroupMembersById(user, groupId, query)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: `All group member retrieved successfully!`,
+    data: result,
+  })
+})
+
 export const groupControllers = {
   joinGroup,
   getAllGroups,
   markAsArrived,
   leaveGroupById,
+  getGroupAllMembers,
 }

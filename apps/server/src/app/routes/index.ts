@@ -10,6 +10,7 @@ import { groupPostRoutes } from '@app/modules/GroupPost/group-post.routes'
 import { groupCommentRoutes } from '@app/modules/GroupPostComment/group-post-comment.routes'
 import { groupPostLikeRoutes } from '@app/modules/GroupPostLike/post-like.routes'
 import { communityLikeRoutes } from '@app/modules/PostLike/post-like.routes'
+import { waveRoutes } from '@app/modules/Wave/wave.routes'
 import express, { Router } from 'express'
 
 const router: Router = express.Router()
@@ -62,6 +63,10 @@ const routes = [
   {
     path: '/group-likes',
     route: groupPostLikeRoutes,
+  },
+  {
+    path: '/wave',
+    route: waveRoutes,
   },
 ]
 

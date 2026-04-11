@@ -664,10 +664,237 @@ const leaveGroup = async (user: IUser, groupId: string) => {
   return { message: 'Successfully left the group.' }
 }
 
+// 6. Get all group member by group ID:
+const getAllGroupMembersById = async (
+  user: IUser,
+  groupId: string,
+  query: Record<string, unknown>
+) => {
+  // 1. check the group exists?:
+  const group = await Group.findById(groupId)
+  if (!group) {
+    throw new AppError(httpStatus.NOT_FOUND, `Group doesn't exists!`)
+  }
+
+  // 2. Check is current user is the member of this group?:
+  const membership = await GroupMember.findOne({
+    user: user?._id,
+    group: group?._id,
+  })
+  if (!membership) {
+    throw new AppError(httpStatus.NOT_FOUND, `You aren't member of this group!`)
+  }
+
+  const pipeline: PipelineStage[] = []
+
+  pipeline.push({
+    $match: {
+      group: group?._id,
+      user: {
+        $ne: user?._id,
+      },
+    },
+  })
+
+  pipeline.push({
+    $lookup: {
+      from: 'waves',
+      let: {
+        memberId: '$user',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $or: [
+                {
+                  $and: [{ $eq: ['$sender', user?._id] }, { $eq: ['$receiver', '$$memberId'] }],
+                },
+                {
+                  $and: [{ $eq: ['$sender', '$$memberId'] }, { $eq: ['$receiver', user?._id] }],
+                },
+              ],
+            },
+          },
+        },
+        {
+          $sort: {
+            createdBy: -1,
+          },
+        },
+      ],
+      as: 'waves',
+    },
+  })
+
+  pipeline.push({
+    $lookup: {
+      from: 'users',
+      localField: 'user',
+      foreignField: '_id',
+      pipeline: [
+        {
+          $lookup: {
+            from: 'userprofiles',
+            let: { userId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$user', '$$userId'],
+                  },
+                },
+              },
+              {
+                $lookup: {
+                  from: 'dutystations',
+
+                  localField: 'currentStation',
+                  foreignField: '_id',
+                  as: 'currentStation',
+                },
+              },
+              {
+                $lookup: {
+                  from: 'dutystations',
+                  localField: 'futureStation',
+                  foreignField: '_id',
+                  as: 'futureStation',
+                },
+              },
+              {
+                $unwind: {
+                  path: '$currentStation',
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $unwind: {
+                  path: '$futureStation',
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+            ],
+            as: 'profileDetails',
+          },
+        },
+        {
+          $unwind: {
+            path: '$profileDetails',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ],
+      as: 'userDetails',
+    },
+  })
+
+  pipeline.push({
+    $unwind: {
+      path: '$userDetails',
+      preserveNullAndEmptyArrays: true,
+    },
+  })
+
+  pipeline.push({
+    $addFields: {
+      // Profile Fields:
+
+      isMatched: {
+        $let: {
+          vars: {
+            wave: { $arrayElemAt: ['$waves', 0] },
+          },
+          in: { $eq: ['$$wave.status', 'ACCEPTED'] },
+        },
+      },
+
+      isWavePending: {
+        $let: {
+          vars: {
+            wave: { $arrayElemAt: ['$waves', 0] },
+          },
+          in: {
+            $and: [{ $eq: ['$$wave.status', 'PENDING'] }, { $eq: ['$$wave.sender', user?._id] }],
+          },
+        },
+      },
+
+      isIncomingWave: {
+        $let: {
+          vars: {
+            wave: { $arrayElemAt: ['$waves', 0] },
+          },
+          in: {
+            $and: [
+              { $eq: ['$$wave.status', 'PENDING'] },
+              { $not: [{ $eq: ['$$wave.sender', user?._id] }] },
+            ],
+          },
+        },
+      },
+
+      isDeclinedByMe: {
+        $let: {
+          vars: {
+            wave: { $arrayElemAt: ['$waves', 0] },
+          },
+          in: {
+            $and: [{ $eq: ['$$wave.status', 'DECLINED'] }, { $eq: ['$$wave.receiver', user?._id] }],
+          },
+        },
+      },
+
+      isDeclinedByThem: {
+        $let: {
+          vars: {
+            wave: { $arrayElemAt: ['$waves', 0] },
+          },
+          in: {
+            $and: [{ $eq: ['$$wave.status', 'DECLINED'] }, { $eq: ['$$wave.sender', user?._id] }],
+          },
+        },
+      },
+    },
+  })
+
+  pipeline.push({
+    $project: {
+      name: '$userDetails.name',
+      email: '$userDetails.email',
+      userId: '$userDetails._id',
+      group: '$group',
+      membershipStatus: '$status',      
+      profileImage: '$userDetails.profileImage',
+      affiliation: '$userDetails.profileDetails.affiliation',
+      movement: {
+        $concat: [
+          '$userDetails.profileDetails.currentStation.name',
+          ' -> ',
+          '$userDetails.profileDetails.futureStation.name',
+        ],
+      },
+      isMatched: 1,
+      isWavePending: 1,
+      isIncomingWave: 1,
+      isDeclinedByMe: 1,
+      isDeclinedByThem: 1,
+      joinedAt: 1,
+      createdAt: 1,
+      updatedAt: 1,
+    },
+  })
+
+  const groupMembers = await GroupMember.aggregate(pipeline)
+
+  return groupMembers
+}
+
 export const groupServices = {
   findOrCreateSuggestedGroup,
   joinGroup,
   markAsArrived,
   getAllGroups,
   leaveGroup,
+  getAllGroupMembersById,
 }

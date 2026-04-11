@@ -30,4 +30,11 @@ router.post(
   groupControllers.leaveGroupById
 )
 
+router.get(
+  '/member/:id',
+  auth(AuthRoles.USER),
+  // validateRequest(groupValidations.getAllGroupMembersById),
+  groupControllers.getGroupAllMembers
+)
+
 export const groupRoutes = router
