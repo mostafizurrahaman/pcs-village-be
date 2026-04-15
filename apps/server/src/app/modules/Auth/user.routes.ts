@@ -91,4 +91,7 @@ router.patch(
   AuthController.updateProfile
 )
 
+// 12. Generate Access Token by refresh token: 
+router.post('/refresh-token', validateRequest(AuthValidations.refreshToken), AuthController.refreshToken)
+
 export const authRoutes = router

@@ -951,6 +951,80 @@ const updateProfile = async (userId: string, payload: any, profileImage?: Expres
   }
 }
 
+const refreshToken = async (refreshToken: string) => {
+  if (!refreshToken) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Refresh token is required!')
+  }
+
+  // 1. check is refresh token valid : ?
+  const decoded = await verifyToken(refreshToken, configs.jwt.refreshToken.secret)
+
+  if (!decoded?.email) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid access token')
+  }
+
+  /**
+   * 2. Fetch user
+   */
+  const user = await User.isUserExistByEmail(decoded.email)
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found')
+  }
+
+  /**
+   * 3. Account status checks
+   */
+  if (await User.isUserBlocked(user)) {
+    throw new AppError(httpStatus.FORBIDDEN, 'Your account has been blocked')
+  }
+
+  if (await User.isUserDeleted(user)) {
+    throw new AppError(httpStatus.GONE, 'Your account has been deleted')
+  }
+
+  if (!user.isOtpVerified) {
+    throw new AppError(httpStatus.FORBIDDEN, 'Please verify your account')
+  }
+
+  if (await User.isUserUnderReview(user)) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Your account is under review. Please submit required documents'
+    )
+  }
+
+  if (user.status !== AuthStatus.ACTIVE) {
+    throw new AppError(httpStatus.FORBIDDEN, 'Your account is not active')
+  }
+
+  /**
+   * 4. Token invalidation check
+   */
+  if (
+    user.passwordChangedAt &&
+    (await User.isJwtIssuedBeforePasswordChanged(user.passwordChangedAt, decoded.iat as number))
+  ) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Token has expired. Please log in again')
+  }
+
+  const jwtPayload: IJwtUserPayload = {
+    _id: user._id?.toString(),
+    email: user?.email,
+    name: user?.name,
+    profileImage: user?.profileImage as string,
+    status: user?.status,
+  }
+
+  // 5. Generate new access token :
+  const accessToken = createToken(
+    jwtPayload,
+    configs.jwt.accessToken.secret,
+    configs.jwt.accessToken.expiresIn
+  )
+
+  return { accessToken }
+}
+
 export const AuthServices = {
   signUp,
   resendSignupOTP,
@@ -963,4 +1037,5 @@ export const AuthServices = {
   changedPassword,
   getMe,
   updateProfile,
+  refreshToken,
 }

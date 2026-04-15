@@ -89,7 +89,7 @@ const createWave = async (user: IUser, payload: ICreateWavePayload) => {
   return wave
 }
 
-
+                        
 // 2. Back Wave ** 
 const acceptWave = async(user:IUser, id: string ) => { 
 

@@ -92,7 +92,6 @@ const changedPasswordSchema = z.object({
 const updateProfileSchema = z.object({
   body: z.object({
     name: optionalString('Name'),
-
     // profile info:
     branch: optionalString('Branch ID'),
     affiliation: optionalEnumString(AffiliationValues, 'Affiliation'),
@@ -102,6 +101,19 @@ const updateProfileSchema = z.object({
     futureStation: optionalString('Future Station ID'),
     estimatedPcsDate: optionalString('Estimated PCS Date'),
   }),
+})
+
+const refreshToken = z.object({
+  cookies: z
+    .object({
+      refreshToken: optionalString('Refresh Token'),
+    })
+    .optional(),
+  body: z
+    .object({
+      refreshToken: optionalString('Refresh Token'),
+    })
+    .optional(),
 })
 
 export const AuthValidations = {
@@ -115,6 +127,7 @@ export const AuthValidations = {
   changedPasswordSchema,
   resetPasswordSchema,
   updateProfileSchema,
+  refreshToken,
 }
 
 export type ISignUpSchemaType = z.infer<typeof signUserSchema.shape.body>
@@ -127,3 +140,4 @@ export type IResetPasswordOtpType = z.infer<typeof resetPasswordSchema.shape.bod
 export type IResetPasswordOtpQueryType = z.infer<typeof resetPasswordSchema.shape.query>
 export type IChangedPasswordType = z.infer<typeof changedPasswordSchema.shape.body>
 export type IUpdateProfilePayloadType = z.infer<typeof updateProfileSchema.shape.body>
+export type TGetAccessTokenByFreshTokenCookie = z.infer<typeof refreshToken.shape.cookies>
