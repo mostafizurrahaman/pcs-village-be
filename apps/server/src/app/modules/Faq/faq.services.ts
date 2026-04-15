@@ -1,6 +1,7 @@
-import { Faq } from 'packages/db/src'
+
 import { QueryBuilder } from '@repo/shared'
 import type { ICreateFaqPayload, IGetAllFaqQueryType, IUpdateFaqPayload } from './faq.validations'
+import { Faq } from 'packages/db/src'
 
 const createFaq = async (payload: ICreateFaqPayload) => {
   const result = await Faq.create(payload)

@@ -14,4 +14,14 @@ router.post(
   waveControllers.createWave
 )
 
+
+
+router.post(
+  '/accept/:id',
+  auth(AuthRoles.USER),
+  validateRequest(waveValidations.acceptWave),
+  waveControllers.acceptWave
+)
+
+
 export const waveRoutes = router

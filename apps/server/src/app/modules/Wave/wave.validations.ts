@@ -7,8 +7,16 @@ const createWave = z.object({
   }),
 })
 
+
+const acceptWave = z.object({
+  params: z.object({ 
+    id: requiredString('ID')
+  })
+})
+
 export const waveValidations = {
   createWave,
+  acceptWave
 }
 
 export type ICreateWavePayload = z.infer<typeof createWave.shape.body>

@@ -17,6 +17,22 @@ const createWave = catchAsync(async (req, res) => {
   })
 })
 
+
+const acceptWave = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+  const id = req.params.id as string
+
+  const result = await waveServices.acceptWave(user, id)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.CREATED,
+    message: `Wave backed successfully!`,
+    data: result,
+  })
+})
+
 export const waveControllers = {
   createWave,
+  acceptWave
 }
