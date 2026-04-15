@@ -13,9 +13,12 @@ const messageSchema = new Schema<IMessageDoc>(
       ref: 'User',
       required: true,
     },
-    content: {
+    message: {
       type: String,
       required: true,
+    },
+    attachments: {
+      type: [String],
     },
   },
   {
