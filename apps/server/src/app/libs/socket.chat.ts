@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
 import { Socket, type Server } from 'socket.io'
 import {
   AuthStatus,
@@ -12,12 +15,13 @@ import httpStatus from 'http-status'
 import configs from '@app/configs'
 import { logger } from './logger'
 import type { Types } from 'mongoose'
+
 // 1. Server to client events types:
 interface IServerToClientEvents {
   message_received: (_message: IMessageDoc) => void
   display_typing: (_data: { userId: string; isTyping: boolean }) => void
   error: (_data: { message: string }) => void
-  messages_marked_read: (_data: { conversationId: string; readBy: string }) => void
+  marked_as_read: (_data: { conversationId: string; readBy: string }) => void
 }
 
 // 2. Client to server eventsn types:
@@ -111,7 +115,7 @@ export const setupChatServer = async (io: TChatServer) => {
       socket.data.user = user
 
       next()
-    } catch (err) {
+    } catch (err: unknown) {
       next(new AppError(httpStatus.UNAUTHORIZED, `You are unauthorized!`))
     }
   })
@@ -152,7 +156,7 @@ export const setupChatServer = async (io: TChatServer) => {
     socket.on('send_message', async (data) => {
       try {
         const { conversationId, message, attachments } = data
-        logger.info('conversationId', conversationId)
+        logger.info('SEND Message',{ conversationId})
         // 1. Check is the conversation exists?
         const conversation = await Conversation.findOne({
           _id: conversationId,
@@ -175,6 +179,18 @@ export const setupChatServer = async (io: TChatServer) => {
           attachments: Array.isArray(attachments) && attachments?.length > 0 ? attachments : [],
         })
 
+        // 3. Update the last message: 
+        await Conversation.findOneAndUpdate({
+          _id: conversation?._id as Types.ObjectId
+        }, { 
+           $set: { 
+            lastMessage:  newMessage?._id
+           }
+        },  { 
+          new: true
+        })
+
+
         // 3. Stream to conversation
         io.to(conversation?._id?.toString() as string).emit(
           'message_received',
@@ -190,7 +206,7 @@ export const setupChatServer = async (io: TChatServer) => {
 
     // 4. Typing Event:
     socket.on('typing', async ({ conversationId }: any) => {
-      logger.info('conversationId', conversationId)
+      logger.info('Typing', conversationId)
       // 1. Check is the conversation exists?
       const conversation = await Conversation.findById(conversationId)
 
@@ -205,5 +221,39 @@ export const setupChatServer = async (io: TChatServer) => {
         .to(conversation?._id?.toString() as string)
         .emit('display_typing', { isTyping: true, userId: user?._id?.toString() })
     })
+    
+    
+    // 5. mark as read : 
+    socket.on('mark_read',async({conversationId}: any) => {
+
+      logger.info('Mark As  Read', conversationId)
+      // 1. Check is the conversation exists?
+      const conversation = await Conversation.findOneAndUpdate({  
+        _id: conversationId
+      })
+
+      if (!conversation) {
+        socket.emit('error', {
+          message: `Conversation doesn't exists!`,
+        })
+      }
+
+      // 2. Mark all messages of this conversation: 
+       await Message.updateMany({
+          conversation: conversation?._id as Types.ObjectId, 
+          isSeen: false,          
+      }, { 
+        $set: { 
+          isSeen: true
+        }
+      }) 
+
+      socket.to(conversation?._id?.toString() as  string).emit('marked_as_read',{
+        conversationId:  conversation?._id?.toString() as string, 
+        readBy:  user?._id?.toString()
+      })
+    })
   })
+
+
 }

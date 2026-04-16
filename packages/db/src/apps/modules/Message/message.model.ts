@@ -20,6 +20,10 @@ const messageSchema = new Schema<IMessageDoc>(
     attachments: {
       type: [String],
     },
+    isSeen: { 
+      type: Boolean, 
+      default: false
+    }
   },
   {
     timestamps: true,

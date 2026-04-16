@@ -5,6 +5,7 @@ export interface IMessage {
   sender: Types.ObjectId
   message: string
   attachments: string[]
+  isSeen: boolean
 }
 
 export interface IMessageDoc extends IMessage, Document {}
