@@ -20,7 +20,7 @@ import type { Types } from 'mongoose'
 interface IServerToClientEvents {
   message_received: (_message: IMessageDoc) => void
   display_typing: (_data: { userId: string; isTyping: boolean }) => void
-  error: (_data: { message: string }) => void
+  socket_error: (_data: { message: string }) => void
   marked_as_read: (_data: { conversationId: string; readBy: string }) => void
 }
 
@@ -130,7 +130,7 @@ export const setupChatServer = async (io: TChatServer) => {
 
     //  2. Join room event:
     socket.on('join_room', async ({ conversationId }: any) => {
-      logger.info('conversationId', conversationId)
+      logger.info('conversationId', {conversationId})
       // 1. Check is the conversation exists?
       const conversation = await Conversation.findOne({
         _id: conversationId,
@@ -139,8 +139,11 @@ export const setupChatServer = async (io: TChatServer) => {
         },
       })
 
+
+
       if (!conversation) {
-        socket.emit('error', {
+        logger.info('NO CONVERSATION', { conversation})
+        socket.emit('socket_error', {
           message: `Conversation doesn't exists!`,
         })
       }
@@ -166,7 +169,7 @@ export const setupChatServer = async (io: TChatServer) => {
         })
 
         if (!conversation) {
-          socket.emit('error', {
+          socket.emit('socket_error', {
             message: `Conversation doesn't exists!`,
           })
         }
@@ -198,7 +201,7 @@ export const setupChatServer = async (io: TChatServer) => {
         )
       } catch (error: any) {
         logger.info('Send Message Error', error)
-        socket.emit('error', {
+        socket.emit('socket_error', {
           message: error?.message || `Failed to send message`,
         })
       }
@@ -211,7 +214,7 @@ export const setupChatServer = async (io: TChatServer) => {
       const conversation = await Conversation.findById(conversationId)
 
       if (!conversation) {
-        socket.emit('error', {
+        socket.emit('socket_error', {
           message: `Conversation doesn't exists!`,
         })
       }
@@ -233,7 +236,7 @@ export const setupChatServer = async (io: TChatServer) => {
       })
 
       if (!conversation) {
-        socket.emit('error', {
+        socket.emit('socket_error', {
           message: `Conversation doesn't exists!`,
         })
       }
@@ -252,6 +255,10 @@ export const setupChatServer = async (io: TChatServer) => {
         conversationId:  conversation?._id?.toString() as string, 
         readBy:  user?._id?.toString()
       })
+    })
+
+     socket.on('disconnect', () => {
+      logger.info(`Socket disconnected: ${user.name}`)
     })
   })
 
