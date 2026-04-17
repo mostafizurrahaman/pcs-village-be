@@ -40,7 +40,7 @@ const dutyStationSchema = new Schema<IDutyStation>(
     suggestedBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      // required: true,
     },
   },
   {

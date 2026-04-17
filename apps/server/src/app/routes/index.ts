@@ -1,4 +1,5 @@
 import { authRoutes } from '@app/modules/Auth/user.routes'
+import { baseRequestRoutes } from '@app/modules/BaseRequest/base-request.routes'
 import { branchRoutes } from '@app/modules/Branch/branch.route'
 import { communitCommentRoutes } from '@app/modules/CommunityPostComments/community-post-comments.routes'
 import { communityPostRoutes } from '@app/modules/CommunityPosts/community-post.routes'
@@ -67,6 +68,10 @@ const routes = [
   {
     path: '/wave',
     route: waveRoutes,
+  },
+  {
+    path: '/base-request',
+    route: baseRequestRoutes,
   },
 ]
 
