@@ -4,6 +4,7 @@ import { branchRoutes } from '@app/modules/Branch/branch.route'
 import { communitCommentRoutes } from '@app/modules/CommunityPostComments/community-post-comments.routes'
 import { communityPostRoutes } from '@app/modules/CommunityPosts/community-post.routes'
 import { contentRoutes } from '@app/modules/Content/content.route'
+import { conversationRoutes } from '@app/modules/Conversation/conversation.routes'
 import { DutyStationRoutes } from '@app/modules/DutyStation/duty-station.routes'
 import { faqRoutes } from '@app/modules/Faq/faq.routes'
 import { groupRoutes } from '@app/modules/Group/group.routes'
@@ -77,6 +78,10 @@ const routes = [
   {
     path: '/reports',
     route: reportRoutes,
+  },
+  {
+    path: '/conversations',
+    route: conversationRoutes,
   },
 ]
 
