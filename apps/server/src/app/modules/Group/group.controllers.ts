@@ -76,10 +76,24 @@ const getGroupAllMembers = catchAsync(async (req, res) => {
   })
 })
 
+const getMemberProfileById = catchAsync(async (req, res) => {
+  const memberId = req.params.id as string
+
+  const result = await groupServices.getMemberProfilebyId(memberId)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: `Member profile is retrived successfully!`,
+    data: result,
+  })
+})
+
 export const groupControllers = {
   joinGroup,
   getAllGroups,
   markAsArrived,
   leaveGroupById,
   getGroupAllMembers,
+  getMemberProfileById,
 }

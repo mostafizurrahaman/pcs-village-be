@@ -6,6 +6,7 @@ import {
   GroupTabs,
   GroupType,
   MembershipStatus,
+  User,
   UserProfile,
   type IUser,
   type TGroupType,
@@ -864,7 +865,7 @@ const getAllGroupMembersById = async (
       email: '$userDetails.email',
       userId: '$userDetails._id',
       group: '$group',
-      membershipStatus: '$status',      
+      membershipStatus: '$status',
       profileImage: '$userDetails.profileImage',
       affiliation: '$userDetails.profileDetails.affiliation',
       movement: {
@@ -890,6 +891,93 @@ const getAllGroupMembersById = async (
   return groupMembers
 }
 
+// 7. Get member profile:
+const getMemberProfilebyId = async (memberId: string) => {
+  // 1. Check is member exists:
+  const member = await User.aggregate([
+    {
+      $match: {
+        _id: new Types.ObjectId(memberId),
+      },
+    },
+    {
+      $lookup: {
+        from: 'userprofiles',
+        localField: '_id',
+        foreignField: 'user',
+        as: 'profile',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'dutystations',
+              localField: 'currentStation',
+              foreignField: '_id',
+              as: 'currentStationDetails',
+            },
+          },
+          {
+            $lookup: {
+              from: 'dutystations',
+              localField: 'futureStation',
+              foreignField: '_id',
+              as: 'futureStationDetails',
+            },
+          },
+          {
+            $lookup: {
+              from: 'branches',
+              localField: 'branch',
+              foreignField: '_id',
+              as: 'branchDetails',
+            },
+          },
+          {
+            $unwind: { path: '$futureStationDetails', preserveNullAndEmptyArrays: true },
+          },
+          {
+            $unwind: { path: '$currentStationDetails', preserveNullAndEmptyArrays: true },
+          },
+          {
+            $unwind: { path: '$branchDetails', preserveNullAndEmptyArrays: true },
+          },
+        ],
+      },
+    },
+
+    {
+      $unwind: '$profile',
+    },
+
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        email: 1,
+        status: 1,
+        role: 1,
+        profileImage: 1,
+
+        passwordChangedAt: 1,
+        branch: '$profile.branchDetails',
+        affiliation: '$profile.affiliation',
+        interestTags: '$profile.interestTags',
+        kidsAgeRanges: '$profile.kidsAgeRanges',
+        estimatedPcsDate: '$profile.estimatedPcsDate',
+        futureStation: '$profile.futureStationDetails',
+        currentStation: '$profile.currentStationDetails',
+        createdAt: '$createdAt',
+        updatedAt: '$updatedAt',
+      },
+    },
+  ])
+
+  if (!member?.[0]) {
+    throw new AppError(httpStatus.NOT_FOUND, `User doesn't existst!`)
+  }
+
+  return member?.[0]
+}
+
 export const groupServices = {
   findOrCreateSuggestedGroup,
   joinGroup,
@@ -897,4 +985,5 @@ export const groupServices = {
   getAllGroups,
   leaveGroup,
   getAllGroupMembersById,
+  getMemberProfilebyId,
 }

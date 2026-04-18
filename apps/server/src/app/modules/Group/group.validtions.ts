@@ -44,10 +44,17 @@ const leaveGroup = z.object({
   }),
 })
 
+const getMemberProfileById = z.object({
+  params: z.object({
+    id: requiredString('Member ID'),
+  }),
+})
+
 export const groupValidations = {
   joinGroup,
   getUserAllGroups,
   leaveGroup,
+  getMemberProfileById,
 }
 
 export type TJoinGroup = z.infer<typeof joinGroup.shape.params>

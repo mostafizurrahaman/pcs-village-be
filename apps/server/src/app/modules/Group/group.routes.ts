@@ -37,4 +37,11 @@ router.get(
   groupControllers.getGroupAllMembers
 )
 
+router.get(
+  '/member/:id/profile',
+  auth(AuthRoles.USER),
+  validateRequest(groupValidations.getMemberProfileById),
+  groupControllers.getMemberProfileById
+)
+
 export const groupRoutes = router
