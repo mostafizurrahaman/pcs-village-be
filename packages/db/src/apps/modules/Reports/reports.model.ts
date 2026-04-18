@@ -1,5 +1,6 @@
 import { model, Schema, Types } from 'mongoose'
 import type { IReportDoc } from './reports.interface'
+import { reportStatus, reportStatusValues } from './reports.constant'
 
 const reportSchema = new Schema<IReportDoc>(
   {
@@ -25,6 +26,11 @@ const reportSchema = new Schema<IReportDoc>(
     reason: {
       type: String,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: reportStatusValues,
+      default: reportStatus.PENDING,
     },
   },
   {

@@ -9,6 +9,7 @@ export interface IReport {
   reporter: Types.ObjectId
   reason: string
   isGroup: boolean
+  status: TReportStatus
 }
 
 export interface IReportDoc extends Document, IReport {}
