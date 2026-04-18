@@ -89,86 +89,80 @@ const createWave = async (user: IUser, payload: ICreateWavePayload) => {
   return wave
 }
 
-                        
-// 2. Back Wave ** 
-const acceptWave = async(user:IUser, id: string ) => { 
-
+// 2. Back Wave **
+const acceptWave = async (user: IUser, id: string) => {
   const session = await mongoose.startSession()
 
   try {
-
     await session.startTransaction()
 
-  // 1. Check is wave exists ? 
-  const wave = await Wave.findById(id)
-  if(!wave){ 
-    throw new AppError(httpStatus.NOT_FOUND,`Wave doesn't exists!`)
-  }
+    // 1. Check is wave exists ?
+    const wave = await Wave.findById(id)
+    if (!wave) {
+      throw new AppError(httpStatus.NOT_FOUND, `Wave doesn't exists!`)
+    }
 
-  // 2. Check is this wave send to you?: 
-  if(wave.receiver?.toString() !== user?._id?.toString()){ 
-    throw new AppError(httpStatus.BAD_REQUEST, `You don't have permission to back this wave!`)
-  }
+    // 2. Check is this wave send to you?:
+    if (wave.receiver?.toString() !== user?._id?.toString()) {
+      throw new AppError(httpStatus.BAD_REQUEST, `You don't have permission to back this wave!`)
+    }
 
-  // 3. Check the wave current status : 
-  if(wave.status !== WaveStatus.PENDING) { 
-    throw new AppError(httpStatus.BAD_REQUEST,  `Wave is already ${wave.status}`)
-  }
+    // 3. Check the wave current status :
+    if (wave.status !== WaveStatus.PENDING) {
+      throw new AppError(httpStatus.BAD_REQUEST, `Wave is already ${wave.status}`)
+    }
 
-  //4. Check conversation count: 
-   const conversationCount = await Conversation.countDocuments({ 
-     initiator: wave.sender
-   })
+    //4. Check conversation count:
+    const conversationCount = await Conversation.countDocuments({
+      initiator: wave.sender,
+    })
 
-  //  TODO: SUBSCRIPTION CHECK PENDING 
+    //  TODO: SUBSCRIPTION CHECK PENDING
 
-
-
-    const existingConversation = await Conversation.findOne({ 
-      participant: { 
-        $all: [wave.sender, wave.receiver]
-      }, 
-      $expr: { 
-      $eq: [{$size: '$participant'
-      }, 2]
-      }
+    const existingConversation = await Conversation.findOne({
+      participant: {
+        $all: [wave.sender, wave.receiver],
+      },
+      $expr: {
+        $eq: [{ $size: '$participant' }, 2],
+      },
     }).session(session)
 
-    if(existingConversation){ 
-        wave.status = WaveStatus.ACCEPTED
-        await wave.save({ session})
-        await session.commitTransaction()
-        return existingConversation
-    } 
+    if (existingConversation) {
+      wave.status = WaveStatus.ACCEPTED
+      await wave.save({ session })
+      await session.commitTransaction()
+      return existingConversation
+    }
 
-    // 5. Wave status updated: 
+    // 5. Wave status updated:
     wave.status = WaveStatus.ACCEPTED
-    await wave.save({ session });
+    await wave.save({ session })
 
-
-    // 6. Create new conversation: 
-    const [newConversation] = await Conversation.create([{
-      participant: [wave.sender, wave.receiver], 
-      initiator: wave.sender, 
-      isActive: true    
-    }], { session })
+    // 6. Create new conversation:
+    const [newConversation] = await Conversation.create(
+      [
+        {
+          participant: [wave.sender, wave.receiver],
+          initiator: wave.sender,
+          isActive: true,
+        },
+      ],
+      { session }
+    )
 
     await session.commitTransaction()
     await session.endSession()
 
     return newConversation
-
   } catch (error: any) {
     await session.abortTransaction()
     await session.endSession()
-     throw new AppError(httpStatus.NOT_FOUND,  error.message || `Failed to back wave!`)
+    throw new AppError(httpStatus.NOT_FOUND, error.message || `Failed to back wave!`)
   }
-
 }
 
-
-
-export const waveServices = { 
-   createWave, 
-   acceptWave
+export const waveServices = {
+  createWave,
+  acceptWave,
 }

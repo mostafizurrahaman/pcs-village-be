@@ -17,7 +17,7 @@ import {
   deleteSingleFileFromS3,
   uploadMultipleFileToS3,
 } from 'packages/media-hub/src'
-import mongoose, { type PipelineStage } from 'mongoose'
+import mongoose, { Types, type PipelineStage } from 'mongoose'
 import { logger } from '@app/libs/logger'
 
 // 1. create Community post :
@@ -402,6 +402,32 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
     },
   })
 
+  pipeline.push({
+    $lookup: {
+      from: 'reports',
+      let: {
+        postId: '$_id',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                {
+                  $eq: ['$$postId', '$post'],
+                },
+                {
+                  $eq: ['$isGroup', false],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      as: 'reports',
+    },
+  })
+
   // Final projection
   pipeline.push({
     $project: {
@@ -429,6 +455,41 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
       },
       likes: {
         $size: '$likes',
+      },
+      totalReports: {
+        $size: '$reports',
+      },
+      hasReported: {
+        $gt: [
+          {
+            $size: {
+              $filter: {
+                input: '$reports',
+                as: 'report',
+                cond: {
+                  $eq: ['$$report.reporter', new Types.ObjectId(user?._id)],
+                },
+              },
+            },
+          },
+          0,
+        ],
+      },
+      isLikedByMe: {
+        $gt: [
+          {
+            $size: {
+              $filter: {
+                input: '$likes',
+                as: 'like',
+                cond: {
+                  $eq: ['$$like.user', new Types.ObjectId(user?._id)],
+                },
+              },
+            },
+          },
+          0,
+        ],
       },
 
       // timestamps

@@ -449,6 +449,25 @@ const getUserGroupPostsByUserId = async (user: IUser, query: TGetAllGroupPostsQu
     },
   })
 
+  pipeline.push({
+    $lookup: {
+      from: 'reports',
+      let: {
+        postId: '$_id',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $eq: ['$post', '$$postId'],
+            },
+          },
+        },
+      ],
+      as: 'reports',
+    },
+  })
+
   // // Final projection
   pipeline.push({
     $project: {
@@ -477,6 +496,42 @@ const getUserGroupPostsByUserId = async (user: IUser, query: TGetAllGroupPostsQu
         $size: '$likes',
       },
       isAuthor: 1,
+      totalReports: {
+        $size: '$reports',
+      },
+
+      hasReported: {
+        $gt: [
+          {
+            $size: {
+              $filter: {
+                input: '$reports',
+                as: 'report',
+                cond: {
+                  $eq: ['$$report.reporter', new Types.ObjectId(user._id)],
+                },
+              },
+            },
+          },
+          0,
+        ],
+      },
+      isLikedByMe: {
+        $gt: [
+          {
+            $size: {
+              $filter: {
+                input: '$likes',
+                as: 'like',
+                cond: {
+                  $eq: ['$$like.user', new Types.ObjectId(user?._id)],
+                },
+              },
+            },
+          },
+          0,
+        ],
+      },
 
       // timestamps
       createdAt: 1,
