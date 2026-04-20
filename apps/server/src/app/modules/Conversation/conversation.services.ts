@@ -5,6 +5,7 @@ import { Types, type PipelineStage } from 'mongoose'
 export const searchableFields = ['opponentName', 'opponentEmail']
 
 const getAllConversations = async (user: IUser, query: TGetAllConversationQueryType) => {
+  
   const {
     page = 1,
     limit = 10,

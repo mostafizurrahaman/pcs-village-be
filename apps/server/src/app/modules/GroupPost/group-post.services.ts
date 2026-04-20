@@ -183,11 +183,20 @@ const updateGroupPost = async (
 
 // // 4. Get post by id:
 const getPostById = async (postId: string) => {
-  const post = await GroupPost.findById(postId)
+  const pipeline: PipelineStage[] = []
+
+  pipeline.push({
+    $match: {
+      _id: postId,
+    },
+  })
+
+  const post = await GroupPost.aggregate(pipeline)
 
   if (!post) {
     throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
   }
+
   return post
 }
 
