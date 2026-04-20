@@ -34,7 +34,23 @@ const getAllReports = catchAsync(async (req, res) => {
   })
 })
 
+// Resolve report:
+const resolveReport = catchAsync(async (req, res) => {
+  const requestedId = req.params.id as string
+  const payload = req.body
+
+  const result = await reportServices.resolveReport(requestedId, payload)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: result,
+    data: result,
+  })
+})
+
 export const reportController = {
   reportPost,
   getAllReports,
+  resolveReport,
 }

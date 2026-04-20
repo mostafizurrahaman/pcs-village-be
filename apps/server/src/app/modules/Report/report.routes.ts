@@ -21,4 +21,11 @@ router.get(
   reportController.getAllReports
 )
 
+router.patch(
+  '/:id',
+  auth(AuthRoles.SUPER_ADMIN, AuthRoles.ADMIN),
+  validateRequest(reportValidations.resolveReport),
+  reportController.resolveReport
+)
+
 export const reportRoutes = router

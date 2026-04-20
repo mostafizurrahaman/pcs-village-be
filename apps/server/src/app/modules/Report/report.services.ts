@@ -1,7 +1,11 @@
 // 1. Report Post:
 
 import { Report, reportStatus, type IUser } from '@repo/db'
-import type { TGetAllReportQueryType, TReportPostPayload } from './report.validations'
+import type {
+  TGetAllReportQueryType,
+  TReportPostPayload,
+  TResolveReportPayload,
+} from './report.validations'
 import { model, type PipelineStage } from 'mongoose'
 import { AppError } from '@repo/shared'
 import httpStatus from 'http-status'
@@ -151,6 +155,7 @@ const getAllReports = async (query: TGetAllReportQueryType) => {
       status: '$status',
 
       // post info:
+      postId: '$postData._id',
       postContent: '$postData.content',
       postAttachments: '$postData.attachments',
 
@@ -250,10 +255,7 @@ const getAllReports = async (query: TGetAllReportQueryType) => {
 /**
  * Resolve a post report (Approve or Reject)
  */
-const resolveReport = async (
-  requestId: string,
-  payload: { status: 'APPROVED' | 'REJECTED'; adminNote?: string }
-) => {
+const resolveReport = async (requestId: string, payload: TResolveReportPayload) => {
   const { status, adminNote } = payload
 
   // 1. Fetch the targeted report
