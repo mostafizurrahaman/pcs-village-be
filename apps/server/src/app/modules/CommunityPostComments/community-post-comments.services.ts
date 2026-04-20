@@ -183,6 +183,10 @@ const getAllCommentsByPostID = async (
         authorProfileImg: {
           $ifNull: ['$author.profileImgage', null],
         },
+
+        isMyComment: {
+          $eq: ['$author._id', user?._id],
+        },
       },
     },
     {

@@ -10,7 +10,10 @@ import { AppError } from '@repo/shared'
 import httpStatus from 'http-status'
 import mongoose, { Types } from 'mongoose'
 import { deleteMultipleFilesFromS3, uploadMultipleFileToS3 } from '@repo/media-hub'
-import type { TCreateGroupCommentPayload, TGetAllCommentsByPostIdQuery } from './group-post-comment.validations'
+import type {
+  TCreateGroupCommentPayload,
+  TGetAllCommentsByPostIdQuery,
+} from './group-post-comment.validations'
 
 const createComment = async (
   user: IUser,
@@ -62,7 +65,11 @@ const createComment = async (
   return comment
 }
 
-const getAllCommentsByPostID = async (postId: string, query: TGetAllCommentsByPostIdQuery) => {
+const getAllCommentsByPostID = async (
+  user: IUser,
+  postId: string,
+  query: TGetAllCommentsByPostIdQuery
+) => {
   const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = query
   const skip = (Number(page) - 1) * Number(limit)
 
@@ -94,6 +101,9 @@ const getAllCommentsByPostID = async (postId: string, query: TGetAllCommentsByPo
         },
         authorProfileImg: {
           $ifNull: ['$author.profileImgage', null],
+        },
+        isMyComment: {
+          $eq: ['$author._id', user?._id],
         },
       },
     },

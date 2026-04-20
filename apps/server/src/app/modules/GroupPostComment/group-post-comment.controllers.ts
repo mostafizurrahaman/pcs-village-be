@@ -19,7 +19,10 @@ const createComment = catchAsync(async (req, res) => {
 })
 
 const getCommentsByPostId = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+
   const result = await GroupCommentServices.getAllCommentsByPostID(
+    user,
     req.params.postId as string,
     req.query as unknown as TGetAllCommentsByPostIdQuery
   )
