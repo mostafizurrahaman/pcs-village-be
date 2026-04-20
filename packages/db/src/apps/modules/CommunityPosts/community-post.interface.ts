@@ -5,6 +5,7 @@ export interface ICommunityPost {
   station: Types.ObjectId
   attachments: string[]
   content: string
+  isHidden: Boolean
   createdAt: Date
   updatedAt: Date
 }

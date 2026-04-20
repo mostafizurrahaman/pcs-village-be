@@ -5,6 +5,7 @@ export interface IGroupPost {
   author: Types.ObjectId
   content: string
   attachments?: string[]
+  isHidden: Boolean
   createdAt: Date
   updatedAt: Date
 }

@@ -1,11 +1,13 @@
 // 1. Report Post:
 
-import { Report, type IUser } from '@repo/db'
+import { Report, reportStatus, type IUser } from '@repo/db'
 import type { TGetAllReportQueryType, TReportPostPayload } from './report.validations'
 import { model, type PipelineStage } from 'mongoose'
 import { AppError } from '@repo/shared'
 import httpStatus from 'http-status'
 import { searchableFields } from './report.constant'
+import mongoose from 'mongoose'
+import { logger } from '@app/libs/logger'
 
 // 1. Report post:
 const reportPost = async (user: IUser, payload: TReportPostPayload) => {
@@ -245,8 +247,79 @@ const getAllReports = async (query: TGetAllReportQueryType) => {
   }
 }
 
+/**
+ * Resolve a post report (Approve or Reject)
+ */
+const resolveReport = async (
+  requestId: string,
+  payload: { status: 'APPROVED' | 'REJECTED'; adminNote?: string }
+) => {
+  const { status, adminNote } = payload
+
+  // 1. Fetch the targeted report
+  const report = await Report.findById(requestId)
+  if (!report) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Report not found!')
+  }
+
+  if (report.status !== reportStatus.PENDING) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `This report has already been ${report.status.toLowerCase()}`
+    )
+  }
+
+  // 2. Fetch the post dynamically using the postModel string stored in report
+  const PostModel = mongoose.model(report.postModel)
+  const existingPost = await PostModel.findById(report.post)
+
+  if (!existingPost) {
+    throw new AppError(httpStatus.NOT_FOUND, `The reported post no longer exists!`)
+  }
+
+  const session = await mongoose.startSession()
+
+  try {
+    session.startTransaction()
+
+    if (status === reportStatus.APPROVED) {
+      //3. Hide the post
+      existingPost.set({ isHidden: true })
+      await existingPost.save({ session })
+
+      // ৪. Update the all pending reports for this posts:
+      await Report.updateMany(
+        { post: report.post, status: reportStatus.PENDING },
+        {
+          status: reportStatus.APPROVED,
+          adminNote: adminNote || 'Content removed by administrator.',
+        },
+        { session }
+      )
+    } else if (status === reportStatus.REJECTED) {
+      // ৫. Update the rejected  reports:
+      report.status = reportStatus.REJECTED
+      report.adminNote = adminNote as string
+      await report.save({ session })
+    }
+
+    await session.commitTransaction()
+    return `Report has been ${status.toLowerCase()} successfully!`
+  } catch (error) {
+    await session.abortTransaction()
+    logger.error('Report Resolution Error:', error)
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      `Failed to ${status.toLowerCase()} this report!`
+    )
+  } finally {
+    await session.endSession()
+  }
+}
+
 // 2. Report Get all the posts:
 export const reportServices = {
   reportPost,
   getAllReports,
+  resolveReport,
 }

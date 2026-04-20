@@ -19,6 +19,10 @@ const CommunityPostSchema = new Schema<ICommunityPost>(
     attachments: {
       type: [String],
     },
+    isHidden: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

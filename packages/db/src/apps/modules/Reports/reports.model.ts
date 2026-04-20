@@ -32,6 +32,9 @@ const reportSchema = new Schema<IReportDoc>(
       enum: reportStatusValues,
       default: reportStatus.PENDING,
     },
+    adminNote: {
+      type: String,
+    },
   },
   {
     timestamps: true,

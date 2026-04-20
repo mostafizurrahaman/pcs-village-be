@@ -282,6 +282,9 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
       station: {
         $in: stationIds,
       },
+      isHidden: {
+        $ne: true,
+      },
     },
   }
 

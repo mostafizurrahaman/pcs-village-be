@@ -8,6 +8,7 @@ export interface IReport {
   postModel: 'CommunityPost' | 'GroupPost'
   reporter: Types.ObjectId
   reason: string
+  adminNote?: string
   isGroup: boolean
   status: TReportStatus
 }

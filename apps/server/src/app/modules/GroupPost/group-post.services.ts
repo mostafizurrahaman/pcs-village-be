@@ -309,6 +309,9 @@ const getUserGroupPostsByUserId = async (user: IUser, query: TGetAllGroupPostsQu
   const matchingStage: PipelineStage = {
     $match: {
       group: group?._id,
+      isHidden: {
+        $ne: true,
+      },
     },
   }
 

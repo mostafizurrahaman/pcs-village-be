@@ -21,6 +21,10 @@ const groupPostSchema = new Schema<IGroupPostDoc>(
       type: [String],
       default: [],
     },
+    isHidden: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
