@@ -60,6 +60,11 @@ const envSchema = z.object({
 
   //  Classified base naem:
   CLASSIFIED_BASE_NAME: z.string(),
+
+  // FIREBASE CONFIG:
+  FIREBASE_PROJECT_ID: z.string(),
+  FIREBASE_CLIENT_EMAIL: z.string(),
+  FIREBASE_PRIVATE_KEY: z.string(),
 })
 
 // 3. Validate process.env
@@ -142,6 +147,12 @@ const configs = {
 
   base: {
     name: env.CLASSIFIED_BASE_NAME,
+  },
+
+  firebase: {
+    projectId: env.FIREBASE_PROJECT_ID,
+    clientEmail: env.FIREBASE_CLIENT_EMAIL,
+    privateKey: env.FIREBASE_PRIVATE_KEY,
   },
 } as const
 
