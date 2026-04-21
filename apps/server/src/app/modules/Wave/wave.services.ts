@@ -63,14 +63,17 @@ const createWave = async (user: IUser, payload: ICreateWavePayload) => {
     })
 
     // Send notification for we accepting:
-    await notificationServices.createAndSendNotification({
-      receiver: receiver?._id,
-      entityId: incomingWave._id,
-      entityModel: 'Wave',
-      message: `${user?.name || 'Someone'} accepted your wave. You can now start a conversation.`,
-      title: 'Wave Accepted',
-      type: NotificationType.WAVE_ACCEPTED,
-    })
+    await notificationServices.createAndSendNotification(
+      {
+        receiver: receiver?._id,
+        entityId: incomingWave._id,
+        entityModel: 'Wave',
+        message: `${user?.name || 'Someone'} accepted your wave. You can now start a conversation.`,
+        title: 'Wave Accepted',
+        type: NotificationType.WAVE_ACCEPTED,
+      },
+      null
+    )
 
     return { wave: result, matched: true }
   }
@@ -99,14 +102,17 @@ const createWave = async (user: IUser, payload: ICreateWavePayload) => {
     status: WaveStatus.PENDING,
   })
 
-  await notificationServices.createAndSendNotification({
-    receiver: receiverId,
-    type: 'WAVE_RECEIVED',
-    title: 'New Wave!',
-    message: `${user.name} waved at you!`,
-    entityId: wave._id,
-    entityModel: 'Wave',
-  })
+  await notificationServices.createAndSendNotification(
+    {
+      receiver: receiverId,
+      type: 'WAVE_RECEIVED',
+      title: 'New Wave!',
+      message: `${user.name} waved at you!`,
+      entityId: wave._id,
+      entityModel: 'Wave',
+    },
+    null
+  )
 
   return wave
 }
@@ -173,20 +179,24 @@ const acceptWave = async (user: IUser, id: string) => {
       { session }
     )
 
-    await notificationServices.createAndSendNotification({
-      receiver: wave.sender,
-      type: 'WAVE_RECEIVED',
-      title: 'New Wave!',
-      message: `${user.name} waved at you!`,
-      entityId: newConversation?._id as Types.ObjectId,
-      entityModel: 'Conversation',
-    })
+    await notificationServices.createAndSendNotification(
+      {
+        receiver: wave.sender,
+        type: 'WAVE_RECEIVED',
+        title: 'New Wave!',
+        message: `${user.name} waved at you!`,
+        entityId: newConversation?._id as Types.ObjectId,
+        entityModel: 'Conversation',
+      },
+      session
+    )
 
     await session.commitTransaction()
     await session.endSession()
 
     return newConversation
   } catch (error: any) {
+    console.log(error)
     await session.abortTransaction()
     await session.endSession()
     throw new AppError(httpStatus.NOT_FOUND, error.message || `Failed to back wave!`)

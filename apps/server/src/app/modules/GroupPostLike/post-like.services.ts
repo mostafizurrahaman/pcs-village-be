@@ -54,7 +54,7 @@ const toggleLike = async (user: IUser, postId: string) => {
     message: `${user.name} liked your post!`,
     entityId: postExists._id,
     entityModel: 'GroupPost',
-  })
+  }, null)
 
   return {
     like: true,

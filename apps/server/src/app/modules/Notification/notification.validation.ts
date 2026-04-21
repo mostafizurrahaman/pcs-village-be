@@ -1,5 +1,10 @@
 import { notificationDeviceTypeValues } from 'packages/db/src/apps/modules/NotificationToken/notificationToken.constant'
-import { optionalEnumString, optionalString, requiredString } from 'packages/shared/src'
+import {
+  optionalEnumString,
+  optionalString,
+  requiredString,
+  sortOrderValues,
+} from 'packages/shared/src'
 import z from 'zod'
 
 const registerToken = z.object({
@@ -12,8 +17,8 @@ const registerToken = z.object({
 const getAllNotifications = z.object({
   query: z.object({
     searchTerm: optionalString('Search Term'),
-    sortBy: optionalString('Sort By'),
-    sortOrder: optionalString('Sort Order'),
+    sortBy: optionalEnumString(['createdAt', 'updatedAt', 'isRead'], 'Sort By'),
+    sortOrder: optionalEnumString(sortOrderValues, 'Sort Order'),
     isRead: z.boolean().optional().describe('Is Read'),
     page: optionalString('Page'),
     limit: optionalString('Limit'),

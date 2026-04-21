@@ -61,7 +61,7 @@ const createComment = async (
     message: `${user.name} is commented on your post!`,
     entityId: communityPost._id,
     entityModel: 'CommunityPost',
-  })
+  }, null)
 
   return comment
 }

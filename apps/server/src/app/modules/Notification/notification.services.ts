@@ -1,9 +1,10 @@
 import { firebaseAdmin } from '@app/configs/firebase'
 import { Notification, NotificationToken, type TNotificationType } from '@repo/db'
 import type { TGetAllNotifications } from './notification.validation'
-import mongoose, { type PipelineStage, Types } from 'mongoose'
+import mongoose, { type ClientSession, type PipelineStage, Types } from 'mongoose'
 import { AppError } from '@repo/shared'
 import httpStatus from 'http-status'
+import { logger } from '@app/libs/logger'
 
 type CreateNotificationPayload = {
   receiver: string | Types.ObjectId
@@ -17,20 +18,29 @@ type CreateNotificationPayload = {
 /**
  * Create notification in DB and send FCM push
  */
-const createAndSendNotification = async (payload: CreateNotificationPayload) => {
-  // 1. Save in DB for Persistence (Bell Icon)
-  const notification = await Notification.create({
-    ...payload,
-    isRead: false,
-  })
+const createAndSendNotification = async (
+  payload: CreateNotificationPayload,
+  session: ClientSession | null
+) => {
+  const notification = await Notification.create(
+    [
+      {
+        ...payload,
+        isRead: false,
+      },
+    ],
+    { session }
+  )
 
-  // 1. Retrive the data for the entity:
-  const data = await mongoose.model(payload.entityModel).findById(payload.entityModel)
-  if (!data) {
-    return
+  let data = null
+
+  if (session) {
+    data = await mongoose.model(payload.entityModel).findById(payload.entityId).session(session)
   }
 
-  // 2. Send Push Notification via FCM
+  if (!data) return
+
+  // ⚠️ Don't include external calls in transaction
   await sendPushNotification(payload.receiver.toString(), {
     title: payload.title,
     body: payload.message,
@@ -42,9 +52,8 @@ const createAndSendNotification = async (payload: CreateNotificationPayload) => 
     },
   })
 
-  return notification
+  return notification[0]
 }
-
 /**
  * Internal logic to send FCM push to all active devices of a user
  */
@@ -107,25 +116,87 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
     isRead,
   } = query
 
+  logger.info('userID', userId)
+
   const pipeline: PipelineStage[] = [{ $match: { receiver: new Types.ObjectId(userId) } }]
 
-  // Handle boolean conversion from query string
+  pipeline.push(
+    {
+      $lookup: {
+        from: 'communityposts',
+        localField: 'entityId',
+        foreignField: '_id',
+        as: 'communityPost',
+      },
+    },
+    {
+      $lookup: {
+        from: 'groupposts',
+        localField: 'entityId',
+        foreignField: '_id',
+        as: 'groupPost',
+      },
+    },
+    {
+      $lookup: {
+        from: 'waves',
+        localField: 'entityId',
+        foreignField: '_id',
+        as: 'wave',
+      },
+    },
+    {
+      $lookup: {
+        from: 'conversations',
+        localField: 'entityId',
+        foreignField: '_id',
+        as: 'conversation',
+      },
+    }
+  )
+
+  pipeline.push({
+    $addFields: {
+      entityDetails: {
+        $switch: {
+          branches: [
+            {
+              case: { $eq: ['$entityModel', 'CommunityPost'] },
+              then: { $arrayElemAt: ['$communityPost', 0] },
+            },
+            {
+              case: { $eq: ['$entityModel', 'GroupPost'] },
+              then: { $arrayElemAt: ['$groupPost', 0] },
+            },
+            {
+              case: { $eq: ['$entityModel', 'Wave'] },
+              then: { $arrayElemAt: ['$wave', 0] },
+            },
+            {
+              case: { $eq: ['$entityModel', 'Conversation'] },
+              then: { $arrayElemAt: ['$conversation', 0] },
+            },
+          ],
+          default: null,
+        },
+      },
+    },
+  })
+
+  pipeline.push({
+    $project: {
+      communityPost: 0,
+      groupPost: 0,
+      wave: 0,
+      conversation: 0,
+    },
+  })
+
+  // // Handle boolean conversion from query string
   if (isRead !== undefined) {
     const isReadBool = String(isRead) === 'true'
     pipeline.push({ $match: { isRead: isReadBool } })
   }
-
-  pipeline.push({
-    $lookup: {
-      from: 'users',
-      localField: 'sender',
-      foreignField: '_id',
-      as: 'senderInfo',
-      pipeline: [{ $project: { name: 1, profileImage: 1 } }],
-    },
-  })
-
-  pipeline.push({ $unwind: { path: '$senderInfo', preserveNullAndEmptyArrays: true } })
 
   if (searchTerm) {
     pipeline.push({
@@ -133,6 +204,7 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
         $or: [
           { title: { $regex: searchTerm, $options: 'i' } },
           { message: { $regex: searchTerm, $options: 'i' } },
+          { type: { $regex: searchTerm, $options: 'i' } },
         ],
       },
     })
@@ -152,6 +224,7 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
   })
 
   const result = await Notification.aggregate(pipeline)
+
   const total = result[0]?.meta[0]?.total || 0
 
   return {
@@ -163,6 +236,8 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
       totalPages: Math.ceil(total / parseInt(limit)),
     },
   }
+
+  
 }
 
 const markAsRead = async (userId: string, notificationId: string) => {
