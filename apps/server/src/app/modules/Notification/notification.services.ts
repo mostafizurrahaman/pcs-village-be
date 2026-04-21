@@ -7,7 +7,6 @@ import httpStatus from 'http-status'
 
 type CreateNotificationPayload = {
   receiver: string | Types.ObjectId
-  sender?: string | Types.ObjectId
   title: string
   message: string // Changed from 'body' to 'message' to match Interface
   type: TNotificationType
@@ -25,14 +24,21 @@ const createAndSendNotification = async (payload: CreateNotificationPayload) => 
     isRead: false,
   })
 
+  // 1. Retrive the data for the entity:
+  const data = await mongoose.model(payload.entityModel).findById(payload.entityModel)
+  if (!data) {
+    return
+  }
+
   // 2. Send Push Notification via FCM
-  sendPushNotification(payload.receiver.toString(), {
+  await sendPushNotification(payload.receiver.toString(), {
     title: payload.title,
     body: payload.message,
     data: {
       entityId: payload.entityId.toString(),
       entityModel: payload.entityModel,
       type: payload.type,
+      entityDetails: data.toObject(),
     },
   })
 

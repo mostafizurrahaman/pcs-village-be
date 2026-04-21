@@ -15,7 +15,7 @@ router.patch(
 )
 
 router.get(
-  '/', // Changed from /all to / for REST standards
+  '/',
   auth(AuthRoles.USER, AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN),
   validateRequest(notificationValidations.getAllNotifications),
   notificationControllers.getAllNotifications

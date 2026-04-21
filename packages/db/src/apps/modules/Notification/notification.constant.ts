@@ -1,6 +1,6 @@
 export const NotificationType = {
   // WAVE:
-  WAVE_RECEIVED: 'WAVE_BACKED',
+  WAVE_RECEIVED: 'WAVE_RECEIVED',
   WAVE_ACCEPTED: 'WAVE_ACCEPTED',
 
   //  MESSAGE:

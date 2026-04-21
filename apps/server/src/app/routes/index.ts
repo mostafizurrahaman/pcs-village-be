@@ -11,6 +11,7 @@ import { groupRoutes } from '@app/modules/Group/group.routes'
 import { groupPostRoutes } from '@app/modules/GroupPost/group-post.routes'
 import { groupCommentRoutes } from '@app/modules/GroupPostComment/group-post-comment.routes'
 import { groupPostLikeRoutes } from '@app/modules/GroupPostLike/post-like.routes'
+import { notificationRoutes } from '@app/modules/Notification/notification.routes'
 import { communityLikeRoutes } from '@app/modules/PostLike/post-like.routes'
 import { reportRoutes } from '@app/modules/Report/report.routes'
 import { waveRoutes } from '@app/modules/Wave/wave.routes'
@@ -82,6 +83,10 @@ const routes = [
   {
     path: '/conversations',
     route: conversationRoutes,
+  },
+  {
+    path: '/notifications',
+    route: notificationRoutes,
   },
 ]
 

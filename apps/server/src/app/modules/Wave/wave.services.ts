@@ -3,6 +3,9 @@ import type { ICreateWavePayload } from './wave.validations'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import mongoose from 'mongoose'
+import { notificationServices } from '../Notification/notification.services'
+import { NotificationType } from 'packages/db/src/apps/modules/Notification/notification.constant'
+import type { Types } from 'mongoose'
 
 // 1. Send Wave
 const createWave = async (user: IUser, payload: ICreateWavePayload) => {
@@ -59,6 +62,16 @@ const createWave = async (user: IUser, payload: ICreateWavePayload) => {
       initiator: receiver?._id,
     })
 
+    // Send notification for we accepting:
+    await notificationServices.createAndSendNotification({
+      receiver: receiver?._id,
+      entityId: incomingWave._id,
+      entityModel: 'Wave',
+      message: `${user?.name || 'Someone'} accepted your wave. You can now start a conversation.`,
+      title: 'Wave Accepted',
+      type: NotificationType.WAVE_ACCEPTED,
+    })
+
     return { wave: result, matched: true }
   }
 
@@ -84,6 +97,15 @@ const createWave = async (user: IUser, payload: ICreateWavePayload) => {
     sender: user?._id,
     receiver: receiver?._id,
     status: WaveStatus.PENDING,
+  })
+
+  await notificationServices.createAndSendNotification({
+    receiver: receiverId,
+    type: 'WAVE_RECEIVED',
+    title: 'New Wave!',
+    message: `${user.name} waved at you!`,
+    entityId: wave._id,
+    entityModel: 'Wave',
   })
 
   return wave
@@ -150,6 +172,15 @@ const acceptWave = async (user: IUser, id: string) => {
       ],
       { session }
     )
+
+    await notificationServices.createAndSendNotification({
+      receiver: wave.sender,
+      type: 'WAVE_RECEIVED',
+      title: 'New Wave!',
+      message: `${user.name} waved at you!`,
+      entityId: newConversation?._id as Types.ObjectId,
+      entityModel: 'Conversation',
+    })
 
     await session.commitTransaction()
     await session.endSession()
