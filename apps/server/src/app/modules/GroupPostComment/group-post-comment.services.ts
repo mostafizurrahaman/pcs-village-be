@@ -14,6 +14,7 @@ import type {
   TCreateGroupCommentPayload,
   TGetAllCommentsByPostIdQuery,
 } from './group-post-comment.validations'
+import { notificationServices } from '../Notification/notification.services'
 
 const createComment = async (
   user: IUser,
@@ -60,6 +61,15 @@ const createComment = async (
     parent: parentComment?._id as Types.ObjectId,
     content,
     attachments,
+  })
+
+  await notificationServices.createAndSendNotification({
+    receiver: existingPost.author,
+    type: 'GROUP_POST_COMMENT',
+    title: 'New Comment!',
+    message: `${user.name} commneted on your post!`,
+    entityId: existingPost._id,
+    entityModel: 'GroupPost',
   })
 
   return comment

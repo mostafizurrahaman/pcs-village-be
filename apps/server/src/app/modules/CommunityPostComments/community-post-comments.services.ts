@@ -9,6 +9,7 @@ import { AppError } from 'packages/shared/src'
 import { deleteMultipleFilesFromS3, uploadMultipleFileToS3 } from 'packages/media-hub/src'
 import type { Types } from 'mongoose'
 import mongoose from 'mongoose'
+import { notificationServices } from '../Notification/notification.services'
 
 // 1. create comment:
 const createComment = async (
@@ -51,6 +52,15 @@ const createComment = async (
     parent: parentComment?._id as Types.ObjectId,
     content,
     attachments,
+  })
+
+  await notificationServices.createAndSendNotification({
+    receiver: communityPost?.author as Types.ObjectId,
+    type: 'POST_COMMENT',
+    title: 'New Comment!',
+    message: `${user.name} is commented on your post!`,
+    entityId: communityPost._id,
+    entityModel: 'CommunityPost',
   })
 
   return comment

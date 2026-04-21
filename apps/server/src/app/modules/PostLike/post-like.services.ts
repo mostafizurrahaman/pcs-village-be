@@ -1,12 +1,13 @@
 import { CommunityPost, PostLike, type IUser } from 'packages/db/src'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
+import { notificationServices } from '../Notification/notification.services'
+import type { Types } from 'mongoose'
+import { postLikeValidation } from './post-like.validation'
 
 const toggleLike = async (user: IUser, postId: string) => {
-
-  
   // 1. Check if the post exists
-  const postExists = await CommunityPost.exists({ _id: postId })
+  const postExists = await CommunityPost.findById(postId)
 
   if (!postExists) {
     throw new AppError(httpStatus.NOT_FOUND, `Post doesn't exist!`)
@@ -29,6 +30,15 @@ const toggleLike = async (user: IUser, postId: string) => {
   await PostLike.create({
     user: user?._id,
     post: postId,
+  })
+
+  await notificationServices.createAndSendNotification({
+    receiver: postExists?.author as Types.ObjectId,
+    type: 'POST_LIKE',
+    title: 'New Like!',
+    message: `${user.name} liked your post!`,
+    entityId: postExists._id,
+    entityModel: 'CommunityPost',
   })
 
   return {

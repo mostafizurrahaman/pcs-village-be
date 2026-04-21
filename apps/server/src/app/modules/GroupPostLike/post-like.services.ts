@@ -7,6 +7,8 @@ import {
 } from 'packages/db/src'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
+import type { Types } from 'mongoose'
+import { notificationServices } from '../Notification/notification.services'
 
 const toggleLike = async (user: IUser, postId: string) => {
   // 1. Check if the post exists
@@ -43,6 +45,15 @@ const toggleLike = async (user: IUser, postId: string) => {
   await GroupPostLike.create({
     user: user?._id,
     post: postId,
+  })
+
+  await notificationServices.createAndSendNotification({
+    receiver: postExists?.author as Types.ObjectId,
+    type: 'GROUP_POST_LIKE',
+    title: 'New Like!',
+    message: `${user.name} liked your post!`,
+    entityId: postExists._id,
+    entityModel: 'GroupPost',
   })
 
   return {
