@@ -20,6 +20,22 @@ const getAllConversations = catchAsync(async (req, res) => {
   })
 })
 
+const getAllMessageForConversation = catchAsync(async (req, res) => {
+  const query = req.query as TGetAllConversationQueryType
+  const user = await getUserFromRequest(req)
+
+  const result = await conversationServices.getAllMessage(user, query)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'All conversation retreived successfully!',
+    data: result.data,
+    meta: result.meta,
+  })
+})
+
 export const conversationController = {
   getAllConversations,
+  getAllMessageForConversation,
 }

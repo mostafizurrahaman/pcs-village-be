@@ -14,4 +14,11 @@ router.get(
   conversationController.getAllConversations
 )
 
+router.get(
+  '/messages',
+  auth(AuthRoles.USER),
+  validateRequest(conversationValidations.getAllMessages),
+  conversationController.getAllMessageForConversation
+)
+
 export const conversationRoutes = router

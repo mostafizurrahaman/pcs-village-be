@@ -1,11 +1,14 @@
-import { Conversation, type IUser } from '@repo/db'
-import type { TGetAllConversationQueryType } from './conversation.validations'
+import { Conversation, Message, type IUser } from '@repo/db'
+import type {
+  TGetAllConversationQueryType,
+  TGetAllMessageQueryType,
+} from './conversation.validations'
 import { Types, type PipelineStage } from 'mongoose'
-
+import { AppError } from 'packages/shared/src'
+import httpStatus from 'http-status'
 export const searchableFields = ['opponentName', 'opponentEmail']
 
 const getAllConversations = async (user: IUser, query: TGetAllConversationQueryType) => {
-  
   const {
     page = 1,
     limit = 10,
@@ -189,6 +192,116 @@ const getAllConversations = async (user: IUser, query: TGetAllConversationQueryT
   }
 }
 
+const getAllMessage = async (user: IUser, query: TGetAllMessageQueryType) => {
+  const {
+    page = 1,
+    limit = 10,
+    fromDate,
+    toDate,
+    searchTerm,
+    sortBy = 'createdAt',
+    conversation: conversationId,
+    sortOrder = 'desc',
+  } = query
+
+  const pipeline: PipelineStage[] = []
+
+  // 1. Check is conversation exists:
+  const conversation = await Conversation.findOne({
+    _id: new Types.ObjectId(conversationId),
+    participant: user?._id,
+  })
+
+  if (!conversation) {
+    throw new AppError(httpStatus.NOT_FOUND, `Conversation doesn't exists!`)
+  }
+
+  pipeline.push({
+    $match: {
+      conversation: conversation?._id,
+    },
+  })
+
+  // Now start applying filters :
+  if (fromDate || toDate) {
+    const dateFilter: Record<string, Date> = {}
+
+    if (fromDate) {
+      dateFilter.$gte = new Date(fromDate)
+    }
+
+    if (toDate) {
+      dateFilter.$lte = new Date(toDate)
+    }
+
+    pipeline.push({
+      $match: {
+        createdAt: dateFilter,
+      },
+    })
+  }
+
+  // apply search:
+  if (searchTerm) {
+    pipeline.push({
+      $match: {
+        $or: ['message'].map((field) => {
+          return {
+            [field]: { $regex: searchTerm, $options: 'i' },
+          }
+        }),
+      },
+    })
+  }
+
+  //   sorting:
+  pipeline.push({
+    $sort: {
+      [sortBy]: sortOrder === 'desc' ? -1 : 1,
+    },
+  })
+
+  // pagination:
+  const dataPage = Number(page) || 1
+  const dataLimit = Number(limit) || 10
+  const skip = (dataPage - 1) * dataLimit
+
+  pipeline.push({
+    $facet: {
+      data: [
+        {
+          $skip: skip,
+        },
+        {
+          $limit: dataLimit,
+        },
+      ],
+      meta: [
+        {
+          $count: 'total',
+        },
+      ],
+    },
+  })
+
+  const messages = await Message.aggregate(pipeline)
+
+  const data = messages[0]?.data
+  const total = messages[0]?.meta?.[0]?.total || 0
+  const totalPages = Math.ceil(total / dataLimit)
+
+  return {
+    data,
+    meta: {
+      limit: dataLimit,
+      page: dataPage,
+      total,
+      totalPages,
+    },
+  }
+}
+
 export const conversationServices = {
   getAllConversations,
+  getAllMessage,
 }
