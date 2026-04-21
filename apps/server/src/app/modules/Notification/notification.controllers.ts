@@ -1,13 +1,11 @@
-import { getUserFromRequest } from '@app/libs/get-user-from-request'
 import { catchAsync, sendResponse } from '@repo/shared'
-
 import { notificationServices } from './notification.services'
 import httpStatus from 'http-status'
+import { getUserFromRequest } from '@app/libs/get-user-from-requests'
 
 const registerToken = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
-
-  const result = await notificationServices.registerToken(user, req.body)
+  const result = await notificationServices.registerToken(user._id.toString(), req.body)
 
   sendResponse(res, {
     success: true,
@@ -19,8 +17,7 @@ const registerToken = catchAsync(async (req, res) => {
 
 const getAllNotifications = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
-
-  const result = await notificationServices.getAllNotifications(user._id, req.query)
+  const result = await notificationServices.getAllNotifications(user._id.toString(), req.query)
 
   sendResponse(res, {
     success: true,
@@ -33,14 +30,24 @@ const getAllNotifications = catchAsync(async (req, res) => {
 
 const markAsRead = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
-  const id = req.params.id as string
-
-  const result = await notificationServices.markAsRead(user._id, id)
+  const result = await notificationServices.markAsRead(user._id.toString(), req.params.id as string)
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'Notifications makred as read successfully',
+    message: 'Notification marked as read',
+    data: result,
+  })
+})
+
+const markAllAsRead = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+  const result = await notificationServices.markAllAsRead(user._id.toString())
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'All notifications marked as read',
     data: result,
   })
 })
@@ -49,4 +56,5 @@ export const notificationControllers = {
   registerToken,
   getAllNotifications,
   markAsRead,
+  markAllAsRead,
 }

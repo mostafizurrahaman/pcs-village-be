@@ -18,3 +18,4 @@ export interface INotification {
 }
 
 export interface INotificationDoc extends INotification, Document {}
+

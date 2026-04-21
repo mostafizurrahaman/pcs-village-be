@@ -1,61 +1,57 @@
-// notification.service.ts
-
 import { firebaseAdmin } from '@app/configs/firebase'
-import { Notification, type IUser } from '@repo/db'
-import { NotificationToken } from '@repo/db'
+import { Notification, NotificationToken, type TNotificationType } from '@repo/db'
 import type { TGetAllNotifications } from './notification.validation'
-import type { PipelineStage, Types } from 'mongoose'
-import { AppError } from 'packages/shared/src'
+import mongoose, { type PipelineStage, Types } from 'mongoose'
+import { AppError } from '@repo/shared'
 import httpStatus from 'http-status'
 
-// import type { TRegisterToken } from './notification.validation'
-
 type CreateNotificationPayload = {
+  receiver: string | Types.ObjectId
+  sender?: string | Types.ObjectId
   title: string
-  body: string
-  type: NotificationType
-  data?: Record<string, unknown>
+  message: string // Changed from 'body' to 'message' to match Interface
+  type: TNotificationType
+  entityId: string | Types.ObjectId
+  entityModel: 'CommunityPost' | 'GroupPost' | 'Wave' | 'Conversation'
 }
 
 /**
- * Create notification in DB and send push
+ * Create notification in DB and send FCM push
  */
-export const createAndSendNotification = async (
-  userId: Types.ObjectId,
-  payload: CreateNotificationPayload
-) => {
-  // 1️⃣ Save in DB
+const createAndSendNotification = async (payload: CreateNotificationPayload) => {
+  // 1. Save in DB for Persistence (Bell Icon)
   const notification = await Notification.create({
-    sender: userId,
     ...payload,
+    isRead: false,
   })
 
-  // 2️⃣ Send push (async, don't block main flow if you want)
-  await sendPushNotification(userId, payload)
+  // 2. Send Push Notification via FCM
+  sendPushNotification(payload.receiver.toString(), {
+    title: payload.title,
+    body: payload.message,
+    data: {
+      entityId: payload.entityId.toString(),
+      entityModel: payload.entityModel,
+      type: payload.type,
+    },
+  })
 
   return notification
 }
 
 /**
- * Send FCM push to all active user devices
+ * Internal logic to send FCM push to all active devices of a user
  */
-export const sendPushNotification = async (userId: string, payload: CreateNotificationPayload) => {
+const sendPushNotification = async (
+  receiverId: string,
+  payload: { title: string; body: string; data?: Record<string, string> }
+) => {
   const tokens = await NotificationToken.find({
-    user: userId,
+    user: receiverId,
     isActive: true,
   })
 
   if (!tokens.length) return
-
-  const formattedData = payload.data
-    ? Object.entries(payload.data).reduce(
-        (acc, [key, value]) => {
-          acc[key] = String(value)
-          return acc
-        },
-        {} as Record<string, string>
-      )
-    : {}
 
   const response = await firebaseAdmin.messaging().sendEachForMulticast({
     tokens: tokens.map((t) => t.token),
@@ -63,47 +59,39 @@ export const sendPushNotification = async (userId: string, payload: CreateNotifi
       title: payload.title,
       body: payload.body,
     },
-    data: formattedData,
+    ...(payload.data && { data: payload.data }),
   })
 
-  // 3️⃣ Remove invalid tokens
-  await Promise.all(
-    response.responses.map(async (res, index) => {
-      if (!res.success) {
-        await NotificationToken.findOneAndDelete({
-          token: tokens[index]!.token,
-        })
+  // Cleanup invalid tokens (those uninstalled or expired)
+  const tokensToRemove: string[] = []
+  response.responses.forEach((res, index) => {
+    if (!res.success) {
+      const error = res.error as any
+      if (
+        error?.code === 'messaging/registration-token-not-registered' ||
+        error?.code === 'messaging/invalid-registration-token'
+      ) {
+        tokensToRemove.push(tokens[index]!.token)
       }
-    })
-  )
+    }
+  })
+
+  if (tokensToRemove.length > 0) {
+    await NotificationToken.deleteMany({ token: { $in: tokensToRemove } })
+  }
 }
 
-// ** Register Device Token:
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const registerToken = async (user: IUser, payload: any) => {
+const registerToken = async (userId: string, payload: { token: string; deviceType: string }) => {
   const { token, deviceType } = payload
 
-  const result = await NotificationToken.findOneAndUpdate(
-    {
-      user: user._id,
-      deviceType: deviceType,
-    },
-
-    {
-      $set: {
-        token,
-        isActive: true,
-      },
-    },
-    { upsert: true, returnDocument: 'after' }
+  return await NotificationToken.findOneAndUpdate(
+    { user: userId, deviceType },
+    { $set: { token, isActive: true } },
+    { upsert: true, new: true }
   )
-
-  return result
 }
 
-// ** Get all notifications:
-
-const getAllNotifications = async (userId: Types.ObjectId, query: TGetAllNotifications) => {
+const getAllNotifications = async (userId: string, query: TGetAllNotifications) => {
   const {
     searchTerm,
     sortBy = 'createdAt',
@@ -111,142 +99,88 @@ const getAllNotifications = async (userId: Types.ObjectId, query: TGetAllNotific
     page = '1',
     limit = '10',
     isRead,
-    fromDate,
-    toDate,
   } = query
 
-  const searchtableFields = ['title', 'body', 'userName', 'userEmail']
+  const pipeline: PipelineStage[] = [{ $match: { receiver: new Types.ObjectId(userId) } }]
 
-  const pipeline: PipelineStage[] = [
-    {
-      $match: {
-        user: userId,
-      },
-    },
-  ]
-
+  // Handle boolean conversion from query string
   if (isRead !== undefined) {
-    pipeline.push({
-      $match: {
-        isRead,
-      },
-    })
-  }
-
-  if (fromDate || toDate) {
-    const dateFilter: Record<string, unknown> = {}
-    if (fromDate) {
-      dateFilter.$gte = new Date(fromDate)
-    }
-    if (toDate) {
-      dateFilter.$lte = new Date(toDate)
-    }
-
-    pipeline.push({
-      $match: {
-        createdAt: dateFilter,
-      },
-    })
+    const isReadBool = String(isRead) === 'true'
+    pipeline.push({ $match: { isRead: isReadBool } })
   }
 
   pipeline.push({
     $lookup: {
       from: 'users',
-      localField: 'user',
+      localField: 'sender',
       foreignField: '_id',
-      as: 'user',
-      pipeline: [
-        {
-          $project: {
-            name: 1,
-            email: 1,
-            _id: 1,
-          },
-        },
-      ],
+      as: 'senderInfo',
+      pipeline: [{ $project: { name: 1, profileImage: 1 } }],
     },
   })
 
-  pipeline.push({
-    $addFields: {
-      userName: { $arrayElemAt: ['$user.name', 0] },
-      userEmail: { $arrayElemAt: ['$user.email', 0] },
-      userId: { $arrayElemAt: ['$user._id', 0] },
-    },
-  })
-
-  pipeline.push({
-    $project: {
-      user: 0,
-    },
-  })
+  pipeline.push({ $unwind: { path: '$senderInfo', preserveNullAndEmptyArrays: true } })
 
   if (searchTerm) {
     pipeline.push({
       $match: {
         $or: [
-          ...searchtableFields.map((field) => ({ [field]: { $regex: searchTerm, $options: 'i' } })),
+          { title: { $regex: searchTerm, $options: 'i' } },
+          { message: { $regex: searchTerm, $options: 'i' } },
         ],
       },
     })
   }
 
-  pipeline.push({
-    $sort: {
-      [sortBy]: sortOrder === 'asc' ? 1 : -1,
-    },
-  })
+  const skip = (parseInt(page) - 1) * parseInt(limit)
 
   pipeline.push({
     $facet: {
       meta: [{ $count: 'total' }],
-      data: [{ $skip: (parseInt(page) - 1) * parseInt(limit) }, { $limit: parseInt(limit) }],
+      data: [
+        { $sort: { [sortBy]: sortOrder === 'asc' ? 1 : -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+      ],
     },
   })
 
   const result = await Notification.aggregate(pipeline)
-
-  const data = result[0]?.data || []
   const total = result[0]?.meta[0]?.total || 0
-  const totalPages = Math.ceil(total / parseInt(limit))
 
   return {
-    data,
+    data: result[0]?.data || [],
     meta: {
       total,
       page: parseInt(page),
       limit: parseInt(limit),
-      totalPages,
+      totalPages: Math.ceil(total / parseInt(limit)),
     },
   }
 }
 
-const markAsRead = async (userId: Types.ObjectId, notificationId: string) => {
-  const notification = await Notification.findOne({
-    user: userId,
-    _id: notificationId,
-  })
+const markAsRead = async (userId: string, notificationId: string) => {
+  const notification = await Notification.findOneAndUpdate(
+    { _id: notificationId, receiver: userId },
+    { $set: { isRead: true, readAt: new Date() } },
+    { new: true }
+  )
 
-  if (!notification) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Notification not found!')
-  }
-
-  if (notification.isRead) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Notification has already been read!')
-  }
-
-  notification.isRead = true
-  notification.readAt = new Date()
-
-  notification.save()
-
+  if (!notification) throw new AppError(httpStatus.NOT_FOUND, 'Notification not found')
   return notification
+}
+
+const markAllAsRead = async (userId: string) => {
+  return await Notification.updateMany(
+    { receiver: userId, isRead: false },
+    { $set: { isRead: true, readAt: new Date() } }
+  )
 }
 
 export const notificationServices = {
   createAndSendNotification,
-  sendPushNotification,
   registerToken,
   getAllNotifications,
   markAsRead,
+  markAllAsRead,
 }
