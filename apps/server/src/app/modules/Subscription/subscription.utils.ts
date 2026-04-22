@@ -7,7 +7,7 @@ import {
   SubscriptionHistory,
   SubscriptionPlan,
   SubscriptionStatus,
-} from 'packages/db/src'
+} from '@repo/db'
 import type Stripe from 'stripe'
 
 // 1. Checkout session.completed
@@ -26,8 +26,8 @@ export const handleCheckSession = async (event: Stripe.Event) => {
   // 3. Retrived plan from db:
   const plan = await SubscriptionPlan.findById(planId)
 
-  // 4. Create new subscription :
-  const newSub = await Subscription.create({
+  // Subscription payload:
+  const subData = {
     user: new Types.ObjectId(userId),
     plan: plan?._id as Types.ObjectId,
     stripeCustomerId: session.customer as string,
@@ -40,25 +40,47 @@ export const handleCheckSession = async (event: Stripe.Event) => {
       (subscription?.items?.data?.[0]?.current_period_end as number) * 1000
     ),
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
-  })
+  }
 
-  // 5. Create subscription history:
-  await SubscriptionHistory.create({
-    user: new Types.ObjectId(userId),
-    plan: plan?._id as Types.ObjectId,
-    stripeCustomerId: session.customer as string,
+  // 4. Create new subscription :
+  await Subscription.findOneAndUpdate(
+    {
+      stripeSubscriptionId: subscription.id,
+    },
+    {
+      $set: subData,
+    },
+    {
+      upsert: true,
+      new: true,
+    }
+  )
+
+  // 5. Check is subscripton history exists already:
+  const hasSubscriptonHistory = SubscriptionHistory.findOne({
     stripeSubscriptionId: subscription.id,
     eventType: historyEventType.CREATED,
-    status: SubscriptionStatus.ACTIVE,
-    currentPeriodStart: new Date(
-      (subscription?.items?.data?.[0]?.current_period_start as number) * 1000
-    ),
-    currentPeriodEnd: new Date(
-      (subscription?.items?.data?.[0]?.current_period_end as number) * 1000
-    ),
-
-    raw: event,
   })
+
+  if (!hasSubscriptonHistory) {
+    // 6. Create subscription history:
+    await SubscriptionHistory.create({
+      user: new Types.ObjectId(userId),
+      plan: plan?._id as Types.ObjectId,
+      stripeCustomerId: session.customer as string,
+      stripeSubscriptionId: subscription.id,
+      eventType: historyEventType.CREATED,
+      status: SubscriptionStatus.ACTIVE,
+      currentPeriodStart: new Date(
+        (subscription?.items?.data?.[0]?.current_period_start as number) * 1000
+      ),
+      currentPeriodEnd: new Date(
+        (subscription?.items?.data?.[0]?.current_period_end as number) * 1000
+      ),
+
+      raw: event,
+    })
+  }
 }
 
 // 2. Invoice Payment Succedded:
@@ -66,7 +88,7 @@ export const handleInvoicePaymentSuccedded = async (event: Stripe.Event) => {
   const invoice = event.data.object as Stripe.Invoice
 
   // 1. Get the subscription id:
-  const subscriptionId = (await invoice.parent?.subscription_details?.subscription) as string
+  const subscriptionId = invoice.parent?.subscription_details?.subscription as string
 
   // 2. Retrived subscription from stripe:
   const subscription = await stripe.subscriptions.retrieve(subscriptionId as string)
@@ -117,7 +139,7 @@ export const handleInvoicePaymentFailed = async (event: Stripe.Event) => {
   const invoice = event.data.object as Stripe.Invoice
 
   // 1. Get the subscription id:
-  const subscriptionId = (await invoice.parent?.subscription_details?.subscription) as string
+  const subscriptionId = invoice.parent?.subscription_details?.subscription as string
 
   // 2. Retrived subscription from stripe:
   const subscription = await stripe.subscriptions.retrieve(subscriptionId as string)
@@ -152,7 +174,7 @@ export const handleSubscriptionUpdated = async (event: Stripe.Event) => {
     { stripeSubscriptionId: subscription.id },
     {
       status: subscription.cancel_at_period_end
-        ? SubscriptionStatus.CANCELED
+        ? SubscriptionStatus.CANCELLED
         : SubscriptionStatus.ACTIVE,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       currentPeriodStart: new Date(
@@ -186,7 +208,7 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const sub = await Subscription.findOneAndUpdate(
     { stripeSubscriptionId: subscription.id },
     {
-      status: SubscriptionStatus.CANCELED,
+      status: SubscriptionStatus.CANCELLED,
     },
     { new: true }
   )
@@ -198,7 +220,7 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
       stripeSubscriptionId: subscription.id,
       stripeCustomerId: sub.stripeCustomerId,
       eventType: historyEventType.CANCELLED,
-      status: SubscriptionStatus.CANCELED,
+      status: SubscriptionStatus.CANCELLED,
       raw: event,
     })
   }
