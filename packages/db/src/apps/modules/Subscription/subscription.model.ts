@@ -11,7 +11,7 @@ const SubscriptonSchema = new Schema<ISubscriptionDoc>(
     },
     plan: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'SubscriptionPlan',
       required: true,
     },
     stripeCustomerId: {
@@ -26,13 +26,17 @@ const SubscriptonSchema = new Schema<ISubscriptionDoc>(
       type: String,
       enum: subscriptionStatusValues,
     },
+    currentPeriodStart: {
+      type: Date,
+      required: true,
+    },
     currentPeriodEnd: {
       type: Date,
       required: true,
     },
     cancelAtPeriodEnd: {
-      type: Date,
-      required: true,
+      type: Boolean,
+      default: false,
     },
   },
   {

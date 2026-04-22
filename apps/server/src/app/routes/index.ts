@@ -14,6 +14,7 @@ import { groupPostLikeRoutes } from '@app/modules/GroupPostLike/post-like.routes
 import { notificationRoutes } from '@app/modules/Notification/notification.routes'
 import { communityLikeRoutes } from '@app/modules/PostLike/post-like.routes'
 import { reportRoutes } from '@app/modules/Report/report.routes'
+import { subscriptionRoutes } from '@app/modules/Subscription/subscription.route'
 import { subscriptionPlanRoutes } from '@app/modules/SubscriptionPlan/subscription-plan.routes'
 import { waveRoutes } from '@app/modules/Wave/wave.routes'
 import express, { Router } from 'express'
@@ -92,6 +93,10 @@ const routes = [
   {
     path: '/sub-plan',
     route: subscriptionPlanRoutes,
+  },
+  {
+    path: '/subscription',
+    route: subscriptionRoutes,
   },
 ]
 

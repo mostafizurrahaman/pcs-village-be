@@ -130,7 +130,7 @@ export const setupChatServer = async (io: TChatServer) => {
 
     //  2. Join room event:
     socket.on('join_room', async ({ conversationId }: any) => {
-      logger.info('conversationId', {conversationId})
+      logger.info('conversationId', { conversationId })
       // 1. Check is the conversation exists?
       const conversation = await Conversation.findOne({
         _id: conversationId,
@@ -139,10 +139,8 @@ export const setupChatServer = async (io: TChatServer) => {
         },
       })
 
-
-
       if (!conversation) {
-        logger.info('NO CONVERSATION', { conversation})
+        logger.info('NO CONVERSATION', { conversation })
         socket.emit('socket_error', {
           message: `Conversation doesn't exists!`,
         })
@@ -159,7 +157,7 @@ export const setupChatServer = async (io: TChatServer) => {
     socket.on('send_message', async (data) => {
       try {
         const { conversationId, message, attachments } = data
-        logger.info('SEND Message',{ conversationId})
+        logger.info('SEND Message', { conversationId })
         // 1. Check is the conversation exists?
         const conversation = await Conversation.findOne({
           _id: conversationId,
@@ -182,17 +180,20 @@ export const setupChatServer = async (io: TChatServer) => {
           attachments: Array.isArray(attachments) && attachments?.length > 0 ? attachments : [],
         })
 
-        // 3. Update the last message: 
-        await Conversation.findOneAndUpdate({
-          _id: conversation?._id as Types.ObjectId
-        }, { 
-           $set: { 
-            lastMessage:  newMessage?._id
-           }
-        },  { 
-          new: true
-        })
-
+        // 3. Update the last message:
+        await Conversation.findOneAndUpdate(
+          {
+            _id: conversation?._id as Types.ObjectId,
+          },
+          {
+            $set: {
+              lastMessage: newMessage?._id,
+            },
+          },
+          {
+            new: true,
+          }
+        )
 
         // 3. Stream to conversation
         io.to(conversation?._id?.toString() as string).emit(
@@ -224,15 +225,13 @@ export const setupChatServer = async (io: TChatServer) => {
         .to(conversation?._id?.toString() as string)
         .emit('display_typing', { isTyping: true, userId: user?._id?.toString() })
     })
-    
-    
-    // 5. mark as read : 
-    socket.on('mark_read',async({conversationId}: any) => {
 
+    // 5. mark as read :
+    socket.on('mark_read', async ({ conversationId }: any) => {
       logger.info('Mark As  Read', conversationId)
       // 1. Check is the conversation exists?
-      const conversation = await Conversation.findOneAndUpdate({  
-        _id: conversationId
+      const conversation = await Conversation.findOneAndUpdate({
+        _id: conversationId,
       })
 
       if (!conversation) {
@@ -241,26 +240,30 @@ export const setupChatServer = async (io: TChatServer) => {
         })
       }
 
-      // 2. Mark all messages of this conversation: 
-       await Message.updateMany({
-          conversation: conversation?._id as Types.ObjectId, 
-          isSeen: false,          
-      }, { 
-        $set: { 
-          isSeen: true
+      // 2. Mark all messages of this conversation:
+      await Message.updateMany(
+        {
+          conversation: conversation?._id as Types.ObjectId,
+          sender: {
+            $ne: user?._id,
+          },
+          isSeen: false,
+        },
+        {
+          $set: {
+            isSeen: true,
+          },
         }
-      }) 
+      )
 
-      socket.to(conversation?._id?.toString() as  string).emit('marked_as_read',{
-        conversationId:  conversation?._id?.toString() as string, 
-        readBy:  user?._id?.toString()
+      socket.to(conversation?._id?.toString() as string).emit('marked_as_read', {
+        conversationId: conversation?._id?.toString() as string,
+        readBy: user?._id?.toString(),
       })
     })
 
-     socket.on('disconnect', () => {
+    socket.on('disconnect', () => {
       logger.info(`Socket disconnected: ${user.name}`)
     })
   })
-
-
 }

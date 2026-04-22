@@ -9,9 +9,9 @@ import { notFound } from './app/middlewares/not-found'
 import globalErrorHandler from './app/middlewares/global-error-handler'
 import { allRoutes } from '@app/routes'
 import { logger } from '@app/libs/logger'
+import { SubscriptionControllers } from '@app/modules/Subscription/subscription.controllers'
 
-
-// App 
+// App
 const app: express.Application = express()
 
 const limiter = rateLimit({
@@ -31,6 +31,12 @@ app.use(
   })
 )
 app.use(helmet())
+
+app.post(
+  '/api/v1/subscriptions/webhook',
+  express.raw({ type: 'application/json' }),
+  SubscriptionControllers.stripeWebhook
+)
 app.use(express.json())
 app.use(cookieParser())
 app.use(

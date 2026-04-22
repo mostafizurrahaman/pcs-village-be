@@ -9,8 +9,9 @@ export interface ISubscription {
   stripeCustomerId: string
   stripeSubscriptionId: string
   status: TSubscriptionStatusType
+  currentPeriodStart: Date
   currentPeriodEnd: Date
-  cancelAtPeriodEnd: Date
+  cancelAtPeriodEnd: Boolean
 }
 
 export interface ISubscriptionDoc extends ISubscription, Document {}
