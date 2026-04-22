@@ -21,7 +21,7 @@ const SubscriptionHistorySchema = new Schema<ISubscriptionHistoryDoc>(
 
     raw: Object,
   },
-  { timestamps: true }
+  { timestamps: true, versionKey: false }
 )
 
 export const SubscriptionHistory = model<ISubscriptionHistoryDoc>(

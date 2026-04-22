@@ -6,6 +6,8 @@ import {
   Subscription,
   type IUser,
   SubscriptionStatus,
+  AuthRoles,
+  SubscriptionHistory,
 } from '@repo/db'
 import { AppError } from '@repo/shared'
 import httpStatus from 'http-status'
@@ -17,6 +19,8 @@ import {
   handleSubscriptionDeleted,
   handleSubscriptionUpdated,
 } from './subscription.utils'
+import type { PipelineStage } from 'mongoose'
+import type { TGetSubscriptionHistoryQuery } from './subscription.validation'
 
 const stripe = new Stripe(configs.stripe.secretKey as string, {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,8 +152,222 @@ const checkMessagingAccess = async (userId: string) => {
   return true
 }
 
-const getMySubscription = async (userId: string) => {
-  return await Subscription.findOne({ user: userId }).populate('plan')
+const getMySubscription = async (user: IUser) => {
+  const sub = await Subscription.aggregate([
+    {
+      $match: {
+        user: user?._id,
+        status: {
+          $in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCELLED],
+        },
+        currentPeriodEnd: {
+          $gt: new Date(),
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: 'subscriptionplans',
+        localField: 'plan',
+        foreignField: '_id',
+        as: 'plan',
+      },
+    },
+    {
+      $unwind: {
+        path: '$plan',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $project: {
+        user: '$user',
+        stripeSubscriptionId: '$stripeSubscriptionId',
+        stripePriceId: '$stripePriceId',
+        currentPeriodStart: '$currentPeriodStart',
+        currentPeriodEnd: '$currentPeriodEnd',
+        cancelAtPeriodEnd: '$cancelAtPeriodEnd',
+        stripeCustomerId: '$stripeCustomerId',
+        status: '$status',
+        planName: '$plan.name',
+        planId: '$plan._id',
+        planSlug: '$plan.slug',
+        planCurrency: '$plan.currency',
+        planInterval: '$plan.interval',
+        features: '$plan.features',
+      },
+    },
+  ])
+
+  return sub[0]
+}
+
+// How can i retrived subscription history:
+const getSubscriptionHistory = async (user: IUser, query: TGetSubscriptionHistoryQuery) => {
+  const {
+    page,
+    limit,
+    fromDate,
+    toDate,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    searchTerm,
+  } = query
+
+  const pipeline: PipelineStage[] = []
+
+  // 1. Based on user role :
+  if (user?.role === AuthRoles.USER) {
+    pipeline.push({
+      $match: {
+        user: user?._id,
+      },
+    })
+  }
+
+  // 2. subscriber Info:
+  pipeline.push(
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'subscriber',
+      },
+    },
+    {
+      $lookup: {
+        from: 'subscriptionplans',
+        localField: 'plan',
+        foreignField: '_id',
+        as: 'plan',
+      },
+    },
+    {
+      $unwind: {
+        path: '$subscriber',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $unwind: {
+        path: '$plan',
+        preserveNullAndEmptyArrays: true,
+      },
+    }
+  )
+
+  // 3. Final  projections:
+  pipeline.push({
+    $project: {
+      subscriberId: '$subscriber._id',
+      subscriberName: '$subscriber.name',
+      subscriberEmail: '$subscriber.email',
+      subscriberProfileImage: '$subscriber?.profileImage',
+      stripeCustomerId: '$stripeCustomerId',
+      stripeSubscriptionId: '$stripeSubscriptionId',
+      stripePriceId: '$plan.stripePriceId',
+      status: '$status',
+      eventType: '$eventType',
+      planId: '$plan._id',
+      planName: '$plan.name',
+      planSlug: '$plan.slug',
+      planPrice: '$plan.price',
+      planInterval: '$plan.interval',
+      currentPeriodStart: '$currentPeriodStart',
+      currentPeriodEnd: '$currentPeriodEnd',
+      updatedAt: '$updatedAt',
+      createdAt: '$createdAt',
+    },
+  })
+
+  // 4. Date filter:
+  if (fromDate || toDate) {
+    const dateFilter: Record<string, Date> = {}
+
+    if (fromDate) {
+      dateFilter.$gte = new Date(fromDate)
+    }
+
+    if (toDate) {
+      dateFilter.$lte = new Date(toDate)
+    }
+
+    pipeline.push({
+      $match: {
+        createdAt: dateFilter,
+      },
+    })
+  }
+
+  // searchable fields :
+  if (searchTerm) {
+    const searchableFields = [
+      'planName',
+      'subscriberEmail',
+      'subscriberName',
+      'stripeCustomerId',
+      'stripePriceId',
+    ]
+    pipeline.push({
+      $match: {
+        $or: searchableFields.map((field) => {
+          return {
+            [field]: {
+              $regex: searchTerm,
+              $options: 'i',
+            },
+          }
+        }),
+      },
+    })
+  }
+
+  // Sorting
+  pipeline.push({
+    $sort: {
+      [sortBy]: sortOrder === 'desc' ? -1 : 1,
+    },
+  })
+
+  // Limit && Pagination :
+  const dataPage = Number(page) || 1
+  const dataLimit = Number(limit) || 10
+  const skip = (dataPage - 1) * dataLimit
+
+  pipeline.push({
+    $facet: {
+      data: [
+        {
+          $skip: skip,
+        },
+        {
+          $limit: dataLimit,
+        },
+      ],
+      meta: [
+        {
+          $count: 'total',
+        },
+      ],
+    },
+  })
+
+  const histories = await SubscriptionHistory.aggregate(pipeline)
+
+  const data = histories?.[0].data
+  const total = histories?.[0]?.meta?.[0]?.total || 0
+  const totalPages = Math.ceil(total / dataLimit)
+
+  return {
+    data,
+    meta: {
+      page: dataPage,
+      limit: dataLimit,
+      total,
+      totalPages,
+    },
+  }
 }
 
 export const SubscriptionServices = {
@@ -157,4 +375,5 @@ export const SubscriptionServices = {
   handleWebhook,
   checkMessagingAccess,
   getMySubscription,
+  getSubscriptionHistory,
 }

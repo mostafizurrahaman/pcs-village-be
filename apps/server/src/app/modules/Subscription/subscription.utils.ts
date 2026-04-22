@@ -9,7 +9,6 @@ import {
   SubscriptionStatus,
 } from '@repo/db'
 import type Stripe from 'stripe'
-
 // 1. Checkout session.completed
 export const handleCheckSession = async (event: Stripe.Event) => {
   const session = event.data.object as Stripe.Checkout.Session
@@ -25,6 +24,9 @@ export const handleCheckSession = async (event: Stripe.Event) => {
 
   // 3. Retrived plan from db:
   const plan = await SubscriptionPlan.findById(planId)
+  if (!plan) {
+    return { message: "Plan doesn't exists" }
+  }
 
   // Subscription payload:
   const subData = {
@@ -120,8 +122,8 @@ export const handleInvoicePaymentSuccedded = async (event: Stripe.Event) => {
       plan: sub.plan,
       stripeSubscriptionId: subscriptionId,
       stripeCustomerId: sub.stripeCustomerId,
-      eventType: 'RENEWED',
-      status: 'ACTIVE',
+      eventType: historyEventType.RENEWED,
+      status: SubscriptionStatus.ACTIVE,
       currentPeriodStart: new Date(
         (subscription?.items?.data?.[0]?.current_period_start as number) * 1000
       ),
