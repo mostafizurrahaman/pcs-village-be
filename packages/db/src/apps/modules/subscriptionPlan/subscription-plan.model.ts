@@ -8,6 +8,9 @@ const subscriptionPlanSchema = new Schema<ISubscriptionPlanDoc>(
       type: String,
       required: true,
     },
+    description: {
+      type: String,
+    },
     slug: {
       type: String,
       required: true,

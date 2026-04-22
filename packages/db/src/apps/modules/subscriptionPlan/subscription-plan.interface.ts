@@ -5,6 +5,7 @@ export type TPlanIntervalType = keyof typeof PlanInterval
 
 export interface ISubscriptionPlan {
   name: string
+  description: string
   slug: string
   price: number
   currency: string
