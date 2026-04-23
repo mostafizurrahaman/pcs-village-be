@@ -129,7 +129,9 @@ const changedPassword = catchAsync(async (req, res) => {
 
 // 10. Changed password:
 const getMe = catchAsync(async (req, res) => {
-  const result = await AuthServices.getMe(req.user)
+  const user = await getUserFromRequest(req)
+
+  const result = await AuthServices.getMe(user)
 
   sendResponse(res, {
     success: true,

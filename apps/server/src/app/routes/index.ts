@@ -16,6 +16,7 @@ import { communityLikeRoutes } from '@app/modules/PostLike/post-like.routes'
 import { reportRoutes } from '@app/modules/Report/report.routes'
 import { subscriptionRoutes } from '@app/modules/Subscription/subscription.route'
 import { subscriptionPlanRoutes } from '@app/modules/SubscriptionPlan/subscription-plan.routes'
+import { UserRoutes } from '@app/modules/User/user.routes'
 import { waveRoutes } from '@app/modules/Wave/wave.routes'
 import express, { Router } from 'express'
 
@@ -97,6 +98,10 @@ const routes = [
   {
     path: '/subscription',
     route: subscriptionRoutes,
+  },
+  {
+    path: '/users',
+    route: UserRoutes,
   },
 ]
 

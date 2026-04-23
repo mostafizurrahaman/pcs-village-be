@@ -738,6 +738,8 @@ const changedPassword = async (userInfo: IUser, payload: IChangedPasswordType) =
 const getMe = async (user: IUser) => {
   // check is the user exists?:
 
+  console.log(user)
+
   const me = await User.aggregate([
     {
       $match: {
@@ -789,7 +791,10 @@ const getMe = async (user: IUser) => {
     },
 
     {
-      $unwind: '$profile',
+      $unwind: {
+        path: '$profile',
+        preserveNullAndEmptyArrays: true,
+      },
     },
 
     {
@@ -816,6 +821,8 @@ const getMe = async (user: IUser) => {
       },
     },
   ])
+
+  console.log(me)
 
   return me[0]
 }
