@@ -1,6 +1,6 @@
 export const SubscriptionStatus = {
   ACTIVE: 'active',
-  CANCELED: 'canceled',
+  CANCELLED: 'cancelled',
   INCOMPLETE: 'incomplete',
   PAST_DUE: 'past_due',
   UNPAID: 'unpaid',

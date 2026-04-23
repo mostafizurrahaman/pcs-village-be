@@ -2,6 +2,7 @@ import { getUserFromRequest } from '@app/libs/get-user-from-requests'
 import { catchAsync, sendResponse } from '@repo/shared'
 import httpStatus from 'http-status'
 import { SubscriptionServices } from './subscripton.services'
+import type { TGetSubscriptionHistoryQuery } from './subscription.validation'
 
 const initiateCheckout = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
@@ -19,13 +20,29 @@ const initiateCheckout = catchAsync(async (req, res) => {
 
 const getMySubscription = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
-  const result = await SubscriptionServices.getMySubscription(user._id.toString())
+  const result = await SubscriptionServices.getMySubscription(user)
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'Subscription status retrieved',
+    message: 'Subscription status retrieved!',
     data: result,
+  })
+})
+
+const getSubscriptionHistory = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+  const result = await SubscriptionServices.getSubscriptionHistory(
+    user,
+    req.query as TGetSubscriptionHistoryQuery
+  )
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Subscription histories retrieved successfully!',
+    data: result.data,
+    meta: result.meta,
   })
 })
 
@@ -38,5 +55,6 @@ const stripeWebhook = catchAsync(async (req, res) => {
 export const SubscriptionControllers = {
   initiateCheckout,
   getMySubscription,
+  getSubscriptionHistory,
   stripeWebhook,
 }

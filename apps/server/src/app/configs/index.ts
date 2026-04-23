@@ -20,8 +20,8 @@ const envSchema = z.object({
   SITE_NAME: z.string(),
   SITE_LOGO: z.string().url().optional(),
   SITE_PRIMARY_COLOR: z.string().default('#000000'),
-  SITE_GST_FEE: z.string().transform(Number).default(0),
-  SITE_FEE: z.string().transform(Number).default(0),
+  // SITE_GST_FEE: z.string().transform(Number).default(0),
+  // SITE_FEE: z.string().transform(Number).default(0),
 
   // Node Mailer
   NODE_APP_PASSWORD: z.string(),
@@ -35,8 +35,8 @@ const envSchema = z.object({
   STRIPE_WEBOOK_KEY: z.string(),
   STRIPE_SUCCESS_URL: z.string().url(),
   STRIPE_CANCEL_URL: z.string().url(),
-  STRIPE_FIXED_FEE: z.string().transform(Number),
-  STRIPE_FEE: z.string().transform(Number),
+  // STRIPE_FIXED_FEE: z.string().transform(Number),
+  // STRIPE_FEE: z.string().transform(Number),
 
   // JWT
   ACCESS_TOKEN_SECRET: z.string().min(10),
@@ -92,8 +92,8 @@ const configs = {
     primaryColor: env.SITE_PRIMARY_COLOR,
     secondaryColor: env.SITE_PRIMARY_COLOR,
     accentColor: env.SITE_PRIMARY_COLOR,
-    siteGstFee: env.SITE_GST_FEE,
-    siteFee: env.SITE_FEE,
+    // siteGstFee: env.SITE_GST_FEE,
+    // siteFee: env.SITE_FEE,
   },
 
   nodeMailer: {
@@ -109,8 +109,8 @@ const configs = {
     webhookKey: env.STRIPE_WEBOOK_KEY,
     successUrl: env.STRIPE_SUCCESS_URL,
     cancelUrl: env.STRIPE_CANCEL_URL,
-    fixedFee: env.STRIPE_FIXED_FEE,
-    percentage: env.STRIPE_FEE,
+    // fixedFee: env.STRIPE_FIXED_FEE,
+    // percentage: env.STRIPE_FEE,
   },
 
   jwt: {

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import {  validateRequest } from '@app/middlewares'
+import { validateRequest } from '@app/middlewares'
 import { AuthRoles } from '@repo/db'
 import { SubscriptionValidations } from './subscription.validation'
 import { SubscriptionControllers } from './subscription.controllers'
@@ -14,6 +14,13 @@ router.post(
   auth(AuthRoles.USER),
   validateRequest(SubscriptionValidations.createCheckoutSession),
   SubscriptionControllers.initiateCheckout
+)
+
+router.get(
+  '/histories',
+  auth(AuthRoles.USER, AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN),
+  validateRequest(SubscriptionValidations.getAllHistory),
+  SubscriptionControllers.getSubscriptionHistory
 )
 
 export const subscriptionRoutes = router
