@@ -20,9 +20,10 @@ import {
   Wave,
 } from 'packages/db/src'
 import type { IGetAllUserQueryType } from './user.validations'
-import { AppError } from 'packages/shared/src'
-import { deleteMultipleFilesFromS3 } from 'packages/media-hub/src'
+import { AppError } from '@repo/shared'
+import { deleteMultipleFilesFromS3 } from '@repo/media-hub'
 import httpStatus from 'http-status'
+
 const getAllUserFromDB = async (query: IGetAllUserQueryType) => {
   const {
     page = 1,
