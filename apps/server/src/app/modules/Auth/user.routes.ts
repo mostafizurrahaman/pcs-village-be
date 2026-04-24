@@ -82,7 +82,7 @@ router.get(
 // 11. Update Profile:
 router.patch(
   '/update-profile',
-  auth(AuthRoles.USER),
+  auth(AuthRoles.USER, AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN),
   multerFactory({
     category: 'image',
     maxSizeInMB: 5,
@@ -91,7 +91,22 @@ router.patch(
   AuthController.updateProfile
 )
 
-// 12. Generate Access Token by refresh token: 
-router.post('/refresh-token', validateRequest(AuthValidations.refreshToken), AuthController.refreshToken)
+// 11. Update Profile:
+router.patch(
+  '/update-profile-admin',
+  auth(AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN),
+  multerFactory({
+    category: 'image',
+    maxSizeInMB: 5,
+  }).single('profileImage'),
+  AuthController.updateProfileAdmin
+)
+
+// 12. Generate Access Token by refresh token:
+router.post(
+  '/refresh-token',
+  validateRequest(AuthValidations.refreshToken),
+  AuthController.refreshToken
+)
 
 export const authRoutes = router

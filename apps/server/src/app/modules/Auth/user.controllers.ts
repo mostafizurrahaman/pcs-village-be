@@ -159,6 +159,25 @@ const updateProfile = catchAsync(async (req, res) => {
   })
 })
 
+const updateProfileAdmin = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+  const profileImage = req.file as Express.Multer.File
+  logger.info(profileImage)
+
+  const result = await AuthServices.updateProfileAdmin(
+    user?._id?.toString(),
+    req.body,
+    profileImage
+  )
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Profile and group preferences updated successfully!',
+    data: result,
+  })
+})
+
 /**
  * 12. Refresh Token
  */
@@ -187,4 +206,5 @@ export const AuthController = {
   getMe,
   updateProfile,
   refreshToken,
+  updateProfileAdmin,
 }

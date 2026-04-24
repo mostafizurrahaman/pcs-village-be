@@ -958,6 +958,43 @@ const updateProfile = async (userId: string, payload: any, profileImage?: Expres
   }
 }
 
+const updateProfileAdmin = async (
+  userId: string,
+  payload: any,
+  profileImage?: Express.Multer.File
+) => {
+  const { name } = payload
+
+  const user = await User.findById(userId)
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!')
+  }
+
+  try {
+    // 2. Handle Profile Image Upload (S3)
+    let imageUrl
+    if (profileImage) {
+      const uploaded = await uploadSingleFileToS3(profileImage, 'profiles')
+      imageUrl = uploaded.url
+    }
+
+    // 3. Update the core User collection (Name & Profile Image)
+    if (name) user.name = name
+    if (imageUrl) user.profileImage = imageUrl
+
+    await user.save()
+
+    return {
+      message: `update successfully`,
+    }
+  } catch (error: any) {
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      error.message || 'Failed to update profile'
+    )
+  }
+}
+
 const refreshToken = async (refreshToken: string) => {
   if (!refreshToken) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Refresh token is required!')
@@ -1045,4 +1082,5 @@ export const AuthServices = {
   getMe,
   updateProfile,
   refreshToken,
+  updateProfileAdmin,
 }
