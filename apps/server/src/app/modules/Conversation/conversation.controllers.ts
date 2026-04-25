@@ -1,5 +1,8 @@
 import { catchAsync, sendResponse } from '@repo/shared'
-import type { TGetAllConversationQueryType, TGetAllMessageQueryType } from './conversation.validations'
+import type {
+  TGetAllConversationQueryType,
+  TGetAllMessageQueryType,
+} from './conversation.validations'
 import { getUserFromRequest } from '@app/libs/get-user-from-requests'
 import httpStatus from 'http-status'
 
@@ -35,7 +38,21 @@ const getAllMessageForConversation = catchAsync(async (req, res) => {
   })
 })
 
+const uploadAttachments = catchAsync(async (req, res) => {
+  const files = req.files as Express.Multer.File[]
+
+  const result = await conversationServices.uploadAttchments(files)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Files uploaded successfully!',
+    data: result,
+  })
+})
+
 export const conversationController = {
   getAllConversations,
   getAllMessageForConversation,
+  uploadAttachments,
 }

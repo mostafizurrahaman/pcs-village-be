@@ -6,6 +6,7 @@ import type {
 import { Types, type PipelineStage } from 'mongoose'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
+import { uploadMultipleFileToS3 } from 'packages/media-hub/src'
 export const searchableFields = ['opponentName', 'opponentEmail']
 
 const getAllConversations = async (user: IUser, query: TGetAllConversationQueryType) => {
@@ -301,7 +302,22 @@ const getAllMessage = async (user: IUser, query: TGetAllMessageQueryType) => {
   }
 }
 
+const uploadAttchments = async (files: Express.Multer.File[]) => {
+  if (!Array.isArray(files) || files?.length < 1) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'File required!')
+  }
+
+  if (files?.length > 3) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'You can upload three files at same time!')
+  }
+
+  const uploadedFiles = await uploadMultipleFileToS3(files, 'message')
+
+  return uploadedFiles?.map((file) => file.url)
+}
+
 export const conversationServices = {
   getAllConversations,
   getAllMessage,
+  uploadAttchments,
 }

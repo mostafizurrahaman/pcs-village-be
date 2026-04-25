@@ -141,12 +141,8 @@ const checkMessagingAccess = async (userId: string) => {
   })
 
   // If Premium, let them through
-  if (sub) return true
-
-  // If Free, check if they started more than 2 conversations
-  const count = await Conversation.countDocuments({ initiator: userId })
-  if (count >= 2) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Please update your subscription plan.')
+  if (!sub) {
+    throw new AppError(httpStatus.PAYMENT_REQUIRED, 'Please update your subscription plan!')
   }
 
   return true
