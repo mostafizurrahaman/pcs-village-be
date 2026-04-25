@@ -15,7 +15,7 @@ import { AppError, getPcsWindow } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
 import mongoose, { Types, type PipelineStage } from 'mongoose'
-import type { TGetUserAllGroupQuery } from './group.validtions'
+import type { TGetUserAllGroupMembersQuery, TGetUserAllGroupQuery } from './group.validtions'
 
 // 1. Find or create group:
 const findOrCreateSuggestedGroup = async (payload: {
@@ -669,8 +669,10 @@ const leaveGroup = async (user: IUser, groupId: string) => {
 const getAllGroupMembersById = async (
   user: IUser,
   groupId: string,
-  query: Record<string, unknown>
+  query: TGetUserAllGroupMembersQuery
 ) => {
+  const { page = 1, limit = 10, searchTerm, sortBy = 'joinedAt', sortOrder = 'desc' } = query
+
   // 1. check the group exists?:
   const group = await Group.findById(groupId)
   if (!group) {
@@ -886,9 +888,82 @@ const getAllGroupMembersById = async (
     },
   })
 
+  // if (fromDate || toDate) {
+  //   const dateFilter: Record<string, unknown> = {}
+  //   if (fromDate) {
+  //     dateFilter.$gte = new Date(fromDate as string)
+  //   }
+  //   if (toDate) {
+  //     dateFilter.$lte = new Date(toDate as string)
+  //   }
+
+  //   pipeline.push({
+  //     $match: {
+  //       joinedAt: dateFilter,
+  //     },
+  //   })
+  // }
+
+  const searchableFields = ['name', 'email']
+
+  if (searchTerm) {
+    pipeline.push({
+      $match: {
+        $or: searchableFields.map((field) => ({
+          [field]: {
+            $regex: searchTerm,
+            $options: 'i',
+          },
+        })),
+      },
+    })
+  }
+
+  pipeline.push({
+    $sort: {
+      [sortBy as string]: sortOrder !== 'desc' ? 1 : -1,
+    },
+  })
+
+  const dataPage = Number(page) || 1
+  const dataLimit = Number(limit) || 10
+  const skip = (dataPage - 1) * dataLimit
+
+  pipeline.push({
+    $facet: {
+      data: [
+        {
+          $skip: skip,
+        },
+        {
+          $limit: dataLimit,
+        },
+      ],
+      meta: [
+        {
+          $count: 'total',
+        },
+      ],
+    },
+  })
+
   const groupMembers = await GroupMember.aggregate(pipeline)
 
-  return groupMembers
+  const data = groupMembers?.[0]?.data
+  const total = groupMembers?.[0].meta?.[0]?.total || 0
+  const totalPages = Math.ceil(total / dataLimit)
+
+  return {
+    data,
+    meta: {
+      page: dataPage,
+      limit: dataLimit,
+      total,
+      totalPages,
+    },
+  }
+
+  
 }
 
 // 7. Get member profile:

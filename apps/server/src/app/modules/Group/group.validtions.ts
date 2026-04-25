@@ -38,6 +38,22 @@ const getUserAllGroups = z.object({
   }),
 })
 
+const getAllGroupsMembers = z.object({
+  params: z.object({
+    id: requiredString('Group ID'),
+  }),
+  query: z.object({
+    page: optionalNumber('Page'),
+    limit: optionalNumber('Limit'),
+    searchTerm: optionalString('SearchTerm'),
+    sortBy: optionalEnumString(
+      ['movement', 'affiliation', 'name', 'email', 'joinedAt', 'createdAt', 'updatedAt'],
+      'Sort By'
+    ),
+    sortOrder: optionalEnumString(sortOrderValues, 'Sort Order'),
+  }),
+})
+
 const leaveGroup = z.object({
   params: z.object({
     id: requiredString('Group ID'),
@@ -55,8 +71,10 @@ export const groupValidations = {
   getUserAllGroups,
   leaveGroup,
   getMemberProfileById,
+  getAllGroupsMembers,
 }
 
 export type TJoinGroup = z.infer<typeof joinGroup.shape.params>
 export type TLeaveGroup = z.infer<typeof leaveGroup.shape.params>
 export type TGetUserAllGroupQuery = z.infer<typeof getUserAllGroups.shape.query>
+export type TGetUserAllGroupMembersQuery = z.infer<typeof getAllGroupsMembers.shape.query>

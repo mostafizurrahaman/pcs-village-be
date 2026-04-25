@@ -3,7 +3,7 @@ import { catchAsync, sendResponse } from 'packages/shared/src'
 import { groupServices } from './group.services'
 
 import httpStatus from 'http-status'
-import type { TGetUserAllGroupQuery } from './group.validtions'
+import type { TGetUserAllGroupMembersQuery, TGetUserAllGroupQuery } from './group.validtions'
 
 const joinGroup = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
@@ -64,7 +64,7 @@ const leaveGroupById = catchAsync(async (req, res) => {
 const getGroupAllMembers = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
   const groupId = req.params.id as string
-  const query = req.query as Record<string, unknown>
+  const query = req.query as TGetUserAllGroupMembersQuery
 
   const result = await groupServices.getAllGroupMembersById(user, groupId, query)
 
@@ -72,7 +72,8 @@ const getGroupAllMembers = catchAsync(async (req, res) => {
     success: true,
     statusCode: httpStatus.OK,
     message: `All group member retrieved successfully!`,
-    data: result,
+    data: result.data,
+    meta: result.meta,
   })
 })
 

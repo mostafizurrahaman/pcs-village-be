@@ -33,7 +33,7 @@ router.post(
 router.get(
   '/member/:id',
   auth(AuthRoles.USER),
-  // validateRequest(groupValidations.getAllGroupMembersById),
+  validateRequest(groupValidations.getAllGroupsMembers),
   groupControllers.getGroupAllMembers
 )
 
