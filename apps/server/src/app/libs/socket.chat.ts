@@ -130,6 +130,12 @@ export const setupChatServer = async (io: TChatServer) => {
 
     //  2. Join room event:
     socket.on('join_room', async ({ conversationId }: any) => {
+      if (!conversationId) {
+        socket.emit('socket_error', {
+          message: `Conversation ID is required!`,
+        })
+        return
+      }
       logger.info('conversationId', { conversationId })
       // 1. Check is the conversation exists?
       const conversation = await Conversation.findOne({
@@ -157,6 +163,12 @@ export const setupChatServer = async (io: TChatServer) => {
     socket.on('send_message', async (data) => {
       try {
         const { conversationId, message, attachments } = data
+        if (!conversationId) {
+          socket.emit('socket_error', {
+            message: `Conversation ID is required!`,
+          })
+          return
+        }
         logger.info('SEND Message', { conversationId })
         // 1. Check is the conversation exists?
         const conversation = await Conversation.findOne({
@@ -211,6 +223,13 @@ export const setupChatServer = async (io: TChatServer) => {
     // 4. Typing Event:
     socket.on('typing', async ({ conversationId }: any) => {
       logger.info('Typing', conversationId)
+
+      if (!conversationId) {
+        socket.emit('socket_error', {
+          message: `Conversation ID is required!`,
+        })
+        return
+      }
       // 1. Check is the conversation exists?
       const conversation = await Conversation.findById(conversationId)
 
@@ -229,6 +248,13 @@ export const setupChatServer = async (io: TChatServer) => {
     // 5. mark as read :
     socket.on('mark_read', async ({ conversationId }: any) => {
       logger.info('Mark As  Read', conversationId)
+
+      if (!conversationId) {
+        socket.emit('socket_error', {
+          message: `Conversation ID is required!`,
+        })
+        return
+      }
       // 1. Check is the conversation exists?
       const conversation = await Conversation.findOneAndUpdate({
         _id: conversationId,

@@ -165,6 +165,13 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
   )
 
   pipeline.push({
+    $unwind: {
+      path: '$sender',
+      preserveNullAndEmptyArrays: true,
+    },
+  })
+
+  pipeline.push({
     $addFields: {
       entityDetails: {
         $switch: {
@@ -188,15 +195,16 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
           ],
           default: null,
         },
-        senderId: { $arrayElemAt: ['$sender._id', 0] },
-        senderName: { $arrayElemAt: ['$sender.name', 0] },
-        senderImage: { $arrayElemAt: ['$sender.profileImage', 0] },
       },
+      senderId: '$sender._id',
+      senderName: '$sender.name',
+      senderImage: '$sender.profileImage',
     },
   })
 
   pipeline.push({
     $project: {
+      sender: 0,
       communityPost: 0,
       groupPost: 0,
       wave: 0,
