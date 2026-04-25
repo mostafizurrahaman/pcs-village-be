@@ -800,6 +800,35 @@ const getAllGroupMembersById = async (
   })
 
   pipeline.push({
+    $lookup: {
+      from: 'conversations',
+      let: {
+        userId: '$userDetails._id',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $in: ['$$userId', '$participant'] },
+                { $in: [new Types.ObjectId(user?._id), '$participant'] },
+              ],
+            },
+          },
+        },
+      ],
+      as: 'conversations',
+    },
+  })
+
+  pipeline.push({
+    $unwind: {
+      path: '$conversations',
+      preserveNullAndEmptyArrays: true,
+    },
+  })
+
+  pipeline.push({
     $addFields: {
       // Profile Fields:
 
@@ -858,6 +887,7 @@ const getAllGroupMembersById = async (
           },
         },
       },
+      conversationId: '$conversations._id',
     },
   })
 
@@ -885,6 +915,7 @@ const getAllGroupMembersById = async (
       joinedAt: 1,
       createdAt: 1,
       updatedAt: 1,
+      conversationId: 1,
     },
   })
 
@@ -962,8 +993,6 @@ const getAllGroupMembersById = async (
       totalPages,
     },
   }
-
-  
 }
 
 // 7. Get member profile:
