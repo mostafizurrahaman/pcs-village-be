@@ -66,6 +66,7 @@ const createWave = async (user: IUser, payload: ICreateWavePayload) => {
     await notificationServices.createAndSendNotification(
       {
         receiver: receiver?._id,
+        sender: user?._id,
         entityId: incomingWave._id,
         entityModel: 'Wave',
         message: `${user?.name || 'Someone'} accepted your wave. You can now start a conversation.`,
@@ -105,6 +106,7 @@ const createWave = async (user: IUser, payload: ICreateWavePayload) => {
   await notificationServices.createAndSendNotification(
     {
       receiver: receiverId,
+      sender: user?._id,
       type: 'WAVE_RECEIVED',
       title: 'New Wave!',
       message: `${user.name} waved at you!`,
@@ -182,6 +184,7 @@ const acceptWave = async (user: IUser, id: string) => {
     await notificationServices.createAndSendNotification(
       {
         receiver: wave.sender,
+         sender: user?._id,
         type: 'WAVE_RECEIVED',
         title: 'New Wave!',
         message: `${user.name} waved at you!`,

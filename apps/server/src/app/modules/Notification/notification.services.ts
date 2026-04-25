@@ -8,6 +8,7 @@ import { logger } from '@app/libs/logger'
 
 type CreateNotificationPayload = {
   receiver: string | Types.ObjectId
+  sender: string | Types.ObjectId
   title: string
   message: string // Changed from 'body' to 'message' to match Interface
   type: TNotificationType
@@ -152,6 +153,14 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
         foreignField: '_id',
         as: 'conversation',
       },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'sender',
+        foreignField: '_id',
+        as: 'sender',
+      },
     }
   )
 
@@ -179,6 +188,9 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
           ],
           default: null,
         },
+        senderId: { $arrayElemAt: ['$sender._id', 0] },
+        senderName: { $arrayElemAt: ['$sender.name', 0] },
+        senderImage: { $arrayElemAt: ['$sender.profileImage', 0] },
       },
     },
   })
@@ -236,8 +248,6 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
       totalPages: Math.ceil(total / parseInt(limit)),
     },
   }
-
-  
 }
 
 const markAsRead = async (userId: string, notificationId: string) => {

@@ -47,15 +47,20 @@ const toggleLike = async (user: IUser, postId: string) => {
     post: postId,
   })
 
-  await notificationServices.createAndSendNotification({
-    receiver: postExists?.author as Types.ObjectId,
-    type: 'GROUP_POST_LIKE',
-    title: 'New Like!',
-    message: `${user.name} liked your post!`,
-    entityId: postExists._id,
-    entityModel: 'GroupPost',
-  }, null)
-
+  if (user?._id?.toString() !== postExists.author?.toString()) {
+    await notificationServices.createAndSendNotification(
+      {
+        receiver: postExists?.author as Types.ObjectId,
+        sender: user?._id,
+        type: 'GROUP_POST_LIKE',
+        title: 'New Like!',
+        message: `${user.name} liked your post!`,
+        entityId: postExists._id,
+        entityModel: 'GroupPost',
+      },
+      null
+    )
+  }
   return {
     like: true,
     message: 'added',

@@ -10,6 +10,11 @@ const notificationSchema = new Schema<INotificationDoc>(
       ref: 'User',
       required: true,
     },
+    sender: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     type: {
       type: String,
       enum: notificationTypeValues,

@@ -63,17 +63,20 @@ const createComment = async (
     attachments,
   })
 
-  await notificationServices.createAndSendNotification(
-    {
-      receiver: existingPost.author,
-      type: 'GROUP_POST_COMMENT',
-      title: 'New Comment!',
-      message: `${user.name} commneted on your post!`,
-      entityId: existingPost._id,
-      entityModel: 'GroupPost',
-    },
-    null
-  )
+  if (user?._id?.toString() !== existingPost.author?.toString()) {
+    await notificationServices.createAndSendNotification(
+      {
+        receiver: existingPost.author,
+        sender: user?._id,
+        type: 'GROUP_POST_COMMENT',
+        title: 'New Comment!',
+        message: `${user.name} commneted on your post!`,
+        entityId: existingPost._id,
+        entityModel: 'GroupPost',
+      },
+      null
+    )
+  }
 
   return comment
 }

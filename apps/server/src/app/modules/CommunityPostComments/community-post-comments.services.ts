@@ -54,15 +54,20 @@ const createComment = async (
     attachments,
   })
 
-  await notificationServices.createAndSendNotification({
-    receiver: communityPost?.author as Types.ObjectId,
-    type: 'POST_COMMENT',
-    title: 'New Comment!',
-    message: `${user.name} is commented on your post!`,
-    entityId: communityPost._id,
-    entityModel: 'CommunityPost',
-  }, null)
-
+  if (user?._id?.toString() !== communityPost.author?.toString()) {
+    await notificationServices.createAndSendNotification(
+      {
+        receiver: communityPost?.author as Types.ObjectId,
+        sender: user?._id,
+        type: 'POST_COMMENT',
+        title: 'New Comment!',
+        message: `${user.name} is commented on your post!`,
+        entityId: communityPost._id,
+        entityModel: 'CommunityPost',
+      },
+      null
+    )
+  }
   return comment
 }
 
