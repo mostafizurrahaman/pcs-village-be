@@ -28,4 +28,18 @@ router.get(
   adsControllers.getMyAds
 )
 
+router.get(
+  '/all',
+  auth(AuthRoles.USER),
+  validateRequest(AdsValidations.getAllAds),
+  adsControllers.getAllAds
+)
+
+router.delete(
+  '/:id',
+  auth(AuthRoles.USER),
+  validateRequest(AdsValidations.deleteAds),
+  adsControllers.deleteAds
+)
+
 export const adsRoutes = router

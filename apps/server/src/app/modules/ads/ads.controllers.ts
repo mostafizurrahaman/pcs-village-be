@@ -31,7 +31,36 @@ const getMyAds = catchAsync(async (req, res) => {
   })
 })
 
+const getAllAds = catchAsync(async (req, res) => {
+  const query = req.query
+
+  const adsData = await adsServices.getAllAds(query)
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'All Ads retrieved successfully',
+    data: adsData.data,
+    meta: adsData.meta,
+  })
+})
+
+const deleteAds = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
+  const id = req.params.id as string
+
+  const ad = await adsServices.deleteAds(user, id)
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Ads delelted successfully',
+    data: ad,
+  })
+})
+
 export const adsControllers = {
   createAds,
   getMyAds,
+  getAllAds,
+  deleteAds,
 }
