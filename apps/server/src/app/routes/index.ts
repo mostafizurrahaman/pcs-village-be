@@ -1,3 +1,4 @@
+import { adsRoutes } from '@app/modules/ads/ads.routes'
 import { authRoutes } from '@app/modules/Auth/user.routes'
 import { baseRequestRoutes } from '@app/modules/BaseRequest/base-request.routes'
 import { branchRoutes } from '@app/modules/Branch/branch.route'
@@ -102,6 +103,10 @@ const routes = [
   {
     path: '/users',
     route: UserRoutes,
+  },
+  {
+    path: '/ads',
+    route: adsRoutes,
   },
 ]
 

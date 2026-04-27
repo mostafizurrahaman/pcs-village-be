@@ -5,7 +5,7 @@ import { getUserFromRequest } from '@app/libs/get-user-from-requests'
 import type { RequestHandler } from 'express'
 import { AppError } from 'packages/shared/src'
 
-export const checkMessagingAccess = (): RequestHandler => {
+export const checkSubscriptionAccess = (): RequestHandler => {
   return async (req, res, next) => {
     try {
       const user = await getUserFromRequest(req) // assuming auth middleware already sets req.user
