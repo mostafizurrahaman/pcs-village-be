@@ -1,3 +1,4 @@
+import moment from 'moment'
 import mongoose, { Types, type PipelineStage } from 'mongoose'
 import {
   AuthRoles,
@@ -5,6 +6,7 @@ import {
   CommunityComment,
   CommunityPost,
   Conversation,
+  Group,
   GroupMember,
   GroupPost,
   GroupPostComment,
@@ -19,7 +21,7 @@ import {
   UserProfile,
   Wave,
 } from 'packages/db/src'
-import type { IGetAllUserQueryType } from './user.validations'
+import type { IGetAllUserQueryType, IGetDashboardStatsQueryType } from './user.validations'
 import { AppError } from '@repo/shared'
 import { deleteMultipleFilesFromS3 } from '@repo/media-hub'
 import httpStatus from 'http-status'
@@ -343,8 +345,111 @@ const deleteUserPermanently = async (requestor: any, targetUserId: string) => {
   }
 }
 
+const getDashboardStats = async (query: IGetDashboardStatsQueryType) => {
+  const { year, weekType } = query
+  const startDate = moment().year(year).startOf('year').toDate()
+  const endDate = moment().year(year).endOf('year').toDate()
+
+  // --- 1. TOP 6 CARDS (Filterable by Year) ---
+  const [
+    totalUsers,
+    activeUsers,
+    communityPosts,
+    groupPosts,
+    totalGroups,
+    totalMessages,
+    totalConversations,
+  ] = await Promise.all([
+    User.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
+    User.countDocuments({ status: 'active', createdAt: { $gte: startDate, $lte: endDate } }),
+    CommunityPost.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
+    GroupPost.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
+    Group.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
+    Message.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
+    Conversation.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } }),
+  ])
+
+  // --- 2. USER GROWTH (Line Chart - Monthly) ---
+  const growthData = await User.aggregate([
+    { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+    {
+      $group: {
+        _id: { $month: '$createdAt' },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ])
+
+  // Format Growth Data to ensure all 12 months are present
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ]
+  const formattedGrowth = months.map((month, index) => {
+    const found = growthData.find((d) => d._id === index + 1)
+    return { month, count: found ? found.count : 0 }
+  })
+
+  // --- 3. DAILY ACTIVE USERS (Bar Chart - Mon to Sun) ---
+  const startOfWeek =
+    weekType === 'this-week'
+      ? moment().startOf('isoWeek')
+      : moment().subtract(1, 'weeks').startOf('isoWeek')
+
+  const endOfWeek = moment(startOfWeek).endOf('isoWeek')
+
+  const dailyActiveData = await User.aggregate([
+    {
+      $match: {
+        updatedAt: { $gte: startOfWeek.toDate(), $lte: endOfWeek.toDate() },
+        status: 'active',
+      },
+    },
+    {
+      $group: {
+        _id: { $dayOfWeek: '$updatedAt' }, // 1 (Sun) to 7 (Sat)
+        count: { $sum: 1 },
+      },
+    },
+  ])
+
+  // Format Daily Active Data (Adjusting Mongo's 1=Sun to Mon-Sun sequence)
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const formattedDAU = days.map((day, index) => {
+    // Mongo dayOfWeek: 1=Sun, 2=Mon... 7=Sat. Mapping index: 0=Mon (2), 6=Sun (1)
+    const mongoDay = index === 6 ? 1 : index + 2
+    const found = dailyActiveData.find((d) => d._id === mongoDay)
+    return { day, count: found ? found.count : 0 }
+  })
+
+  return {
+    cards: {
+      totalUsers,
+      activeUsers,
+      totalPosts: communityPosts + groupPosts,
+      totalGroups,
+      messagesSent: totalMessages,
+      totalConversations,
+    },
+    userGrowth: formattedGrowth,
+    dailyActiveUsers: formattedDAU,
+  }
+}
+
 export const userServices = {
   getAllUserFromDB,
   getSingleUserFromDB,
   deleteUserPermanently,
+  getDashboardStats,
 }

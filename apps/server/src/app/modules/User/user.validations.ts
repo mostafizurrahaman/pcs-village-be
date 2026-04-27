@@ -1,4 +1,10 @@
-import { optionalDate, optionalString, requiredString } from '@repo/shared'
+import {
+  enumString,
+  optionalDate,
+  optionalEnumString,
+  optionalString,
+  requiredString,
+} from '@repo/shared'
 import z from 'zod/v4'
 
 // Schema for GET / (Query parameters)
@@ -37,6 +43,21 @@ const deleteUserByID = z.object({
   }),
 })
 
+const dashboardQuerySchema = z.object({
+  query: z.object({
+    year: z
+      .string()
+      .regex(/^\d{4}$/, 'Year must be a valid 4-digit number (e.g., 2024)')
+      .optional()
+      .default(new Date().getFullYear().toString())
+      .transform((val) => Number(val)),
+
+    weekType: optionalEnumString(['this-week', 'last-week'], 'Week Type').default('this-week'),
+  }),
+})
+
+export const AdminValidations = { dashboardQuerySchema }
+
 export const UserValidations = {
   getAllUserSchema,
   getSingleUserSchema,
@@ -45,3 +66,4 @@ export const UserValidations = {
 
 // Types for your Service/Controller
 export type IGetAllUserQueryType = z.infer<typeof getAllUserSchema.shape.query>
+export type IGetDashboardStatsQueryType = z.infer<typeof dashboardQuerySchema.shape.query>

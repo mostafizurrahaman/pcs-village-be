@@ -15,6 +15,13 @@ router.get(
   userControllers.getAllUser
 )
 
+router.get(
+  '/stats',
+  auth(AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN),
+  // validateRequest(UserValidations.getSingleUserSchema),
+  userControllers.getDashboardStats
+)
+
 // Get single user by ID
 router.get(
   '/:id',

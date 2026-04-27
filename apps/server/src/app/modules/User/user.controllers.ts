@@ -1,7 +1,7 @@
 import { catchAsync, sendResponse } from 'packages/shared/src'
 import { userServices } from './user.services'
 import httpStatus from 'http-status'
-import type { IGetAllUserQueryType } from './user.validations'
+import type { IGetAllUserQueryType, IGetDashboardStatsQueryType } from './user.validations'
 import { getUserFromRequest } from '@app/libs/get-user-from-requests'
 
 const getAllUser = catchAsync(async (req, res) => {
@@ -40,9 +40,21 @@ const deleteUserById = catchAsync(async (req, res) => {
     data: result,
   })
 })
+const getDashboardStats = catchAsync(async (req, res) => {
+  const query = req.query as unknown as IGetDashboardStatsQueryType
+  const result = await userServices.getDashboardStats(query)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Dashboard stats retrieved successfully!',
+    data: result,
+  })
+})
 
 export const userControllers = {
   getAllUser,
   getSingleUser, // Add this
   deleteUserById,
+  getDashboardStats,
 }
