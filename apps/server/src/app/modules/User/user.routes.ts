@@ -33,9 +33,10 @@ router.get(
 // Get single user by ID
 router.delete(
   '/:id',
-  auth(AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN),
+  auth(AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN, AuthRoles.USER),
   validateRequest(UserValidations.getSingleUserSchema),
   userControllers.deleteUserById
 )
 
 export const UserRoutes = router
+ 

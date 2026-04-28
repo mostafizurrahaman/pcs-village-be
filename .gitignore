@@ -4,8 +4,6 @@ node_modules/
 
 # --- Environment Variables (Crucial for Security) ---
 # This ignores .env files in the root and inside all subfolders
-.env
-.env.*
 !.env.example
 
 # --- Turborepo & Build Outputs ---
@@ -45,3 +43,4 @@ coverage/
 
 # React email: 
 .react-email
+config.bat
