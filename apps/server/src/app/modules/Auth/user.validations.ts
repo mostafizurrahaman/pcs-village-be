@@ -116,9 +116,31 @@ const refreshToken = z.object({
     .optional(),
 })
 
+const googleLoginSchema = z.object({
+  body: z.object({
+    idToken: requiredString('idToken'),
+  }),
+})
+
+const appleLoginSchema = z.object({
+  body: z.object({
+    idToken: requiredString('idToken'),
+  }),
+})
+
+const oauthLoginSchema = z.object({
+  body: z.object({
+    provider: z.enum(['google', 'apple']),
+    idToken: requiredString('idToken'),
+  }),
+})
+
 export const AuthValidations = {
   signUserSchema,
   loginSchema,
+  googleLoginSchema,
+  appleLoginSchema,
+  oauthLoginSchema,
   resendSignupOtpSchema,
   verifySignupOtpSchema,
   forgotPasswordSchema,
@@ -132,6 +154,9 @@ export const AuthValidations = {
 
 export type ISignUpSchemaType = z.infer<typeof signUserSchema.shape.body>
 export type ILoginType = z.infer<typeof loginSchema.shape.body>
+export type IGoogleLoginType = z.infer<typeof googleLoginSchema.shape.body>
+export type IAppleLoginType = z.infer<typeof appleLoginSchema.shape.body>
+export type IOAuthLoginType = z.infer<typeof oauthLoginSchema.shape.body>
 export type IResendSignupType = z.infer<typeof resendSignupOtpSchema.shape.body>
 export type IVerifySignupOtpType = z.infer<typeof verifySignupOtpSchema.shape.body>
 export type IForgotPasswordType = z.infer<typeof forgotPasswordSchema.shape.body>
@@ -141,3 +166,4 @@ export type IResetPasswordOtpQueryType = z.infer<typeof resetPasswordSchema.shap
 export type IChangedPasswordType = z.infer<typeof changedPasswordSchema.shape.body>
 export type IUpdateProfilePayloadType = z.infer<typeof updateProfileSchema.shape.body>
 export type TGetAccessTokenByFreshTokenCookie = z.infer<typeof refreshToken.shape.cookies>
+

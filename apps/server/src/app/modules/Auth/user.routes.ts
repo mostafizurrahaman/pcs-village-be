@@ -36,6 +36,27 @@ router.post(
 // 4. Login :
 router.post('/login', validateRequest(AuthValidations.loginSchema), AuthController.login)
 
+// 4.1 Google Login:
+router.post(
+  '/google-login',
+  validateRequest(AuthValidations.googleLoginSchema),
+  AuthController.googleLogin
+)
+
+// 4.2 Apple Login:
+router.post(
+  '/apple-login',
+  validateRequest(AuthValidations.appleLoginSchema),
+  AuthController.appleLogin
+)
+
+// 4.3 Unified OAuth Login:
+router.post(
+  '/oauth',
+  validateRequest(AuthValidations.oauthLoginSchema),
+  AuthController.oauthLogin
+)
+
 // 5. Forgot passwod:
 router.post(
   '/forgot-password',

@@ -65,6 +65,13 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string(),
   FIREBASE_CLIENT_EMAIL: z.string(),
   FIREBASE_PRIVATE_KEY: z.string(),
+
+  // GOOGLE & APPLE OAUTH:
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_WEB_CLIENT_ID: z.string().optional(),
+  GOOGLE_IOS_CLIENT_ID: z.string().optional(),
+  GOOGLE_ANDROID_CLIENT_ID: z.string().optional(),
+  APPLE_CLIENT_ID: z.string().optional(),
 })
 
 // 3. Validate process.env
@@ -153,6 +160,17 @@ const configs = {
     projectId: env.FIREBASE_PROJECT_ID,
     clientEmail: env.FIREBASE_CLIENT_EMAIL,
     privateKey: env.FIREBASE_PRIVATE_KEY,
+  },
+
+  google: {
+    clientId: env.GOOGLE_CLIENT_ID,
+    webClientId: env.GOOGLE_WEB_CLIENT_ID,
+    iosClientId: env.GOOGLE_IOS_CLIENT_ID,
+    androidClientId: env.GOOGLE_ANDROID_CLIENT_ID,
+  },
+
+  apple: {
+    clientId: env.APPLE_CLIENT_ID,
   },
 } as const
 

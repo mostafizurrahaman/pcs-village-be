@@ -15,7 +15,7 @@ const userSchema = new Schema<IUser, IUserModel>(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
       select: false,
     },
     status: {

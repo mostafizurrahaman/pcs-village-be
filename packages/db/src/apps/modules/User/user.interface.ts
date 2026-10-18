@@ -4,7 +4,7 @@ import type { TAuthProvider, TAuthRole, TAuthStatus } from './user.constant'
 export interface IUser extends Document {
   name: string
   email: string
-  password: string
+  password?: string
   status: TAuthStatus
   authProvider: TAuthProvider
 

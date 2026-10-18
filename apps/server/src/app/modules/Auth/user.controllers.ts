@@ -62,6 +62,72 @@ const login = catchAsync(async (req, res) => {
   })
 })
 
+// Google login:
+const googleLogin = catchAsync(async (req, res) => {
+  const result = await AuthServices.googleLogin(req.body)
+
+  setCookie(res, 'refreshToken', result.refreshToken, {
+    httpOnly: true,
+    secure: configs.nodeEnv === 'production',
+    maxAge: 365 * 24 * 60 * 60 * 1000,
+    sameSite: 'lax',
+    path: '/',
+  })
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: result.isNewUser
+      ? 'Google registration successful! Please complete your profile.'
+      : 'Logged in with Google successfully!',
+    data: result,
+  })
+})
+
+// Apple login:
+const appleLogin = catchAsync(async (req, res) => {
+  const result = await AuthServices.appleLogin(req.body)
+
+  setCookie(res, 'refreshToken', result.refreshToken, {
+    httpOnly: true,
+    secure: configs.nodeEnv === 'production',
+    maxAge: 365 * 24 * 60 * 60 * 1000,
+    sameSite: 'lax',
+    path: '/',
+  })
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: result.isNewUser
+      ? 'Apple registration successful! Please complete your profile.'
+      : 'Logged in with Apple successfully!',
+    data: result,
+  })
+})
+
+// Unified OAuth login:
+const oauthLogin = catchAsync(async (req, res) => {
+  const result = await AuthServices.oauthLogin(req.body)
+
+  setCookie(res, 'refreshToken', result.refreshToken, {
+    httpOnly: true,
+    secure: configs.nodeEnv === 'production',
+    maxAge: 365 * 24 * 60 * 60 * 1000,
+    sameSite: 'lax',
+    path: '/',
+  })
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: result.isNewUser
+      ? 'Registration successful! Please complete your profile.'
+      : 'Logged in successfully!',
+    data: result,
+  })
+})
+
 // 5. Forgot password:
 const forgotPassword = catchAsync(async (req, res) => {
   const result = await AuthServices.forgotPassword(req.body)
@@ -198,6 +264,9 @@ export const AuthController = {
   resendSignupOTP,
   verifySignupOTP,
   login,
+  googleLogin,
+  appleLogin,
+  oauthLogin,
   forgotPassword,
   verifyResetPasswordOtp,
   resendOTP,
