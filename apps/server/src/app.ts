@@ -32,11 +32,12 @@ app.use(
 )
 app.use(helmet())
 
-app.post(
-  '/api/v1/subscriptions/webhook',
-  express.raw({ type: 'application/json' }),
-  SubscriptionControllers.stripeWebhook
-)
+// Stripe Webhook (Commented out - replaced by RevenueCat):
+// app.post(
+//   '/api/v1/subscriptions/webhook',
+//   express.raw({ type: 'application/json' }),
+//   SubscriptionControllers.stripeWebhook
+// )
 app.use(express.json())
 app.use(cookieParser())
 app.use(

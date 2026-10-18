@@ -11,7 +11,7 @@ export interface ISubscriptionPlan {
   currency: string
   interval: TPlanIntervalType
   features: string[]
-  stripePriceId: string
+  revenueCatProductId?: string | undefined
   isActive: boolean
 }
 

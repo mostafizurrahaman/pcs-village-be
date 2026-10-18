@@ -12,15 +12,21 @@ const SubscriptonSchema = new Schema<ISubscriptionDoc>(
     plan: {
       type: Schema.Types.ObjectId,
       ref: 'SubscriptionPlan',
-      required: true,
+      required: false,
     },
-    stripeCustomerId: {
+    revenueCatOriginalTransactionId: {
       type: String,
-      required: true,
+      index: true,
     },
-    stripeSubscriptionId: {
+    revenueCatAppUserId: {
       type: String,
-      required: true,
+      index: true,
+    },
+    revenueCatStore: {
+      type: String,
+    },
+    revenueCatProductId: {
+      type: String,
     },
     status: {
       type: String,

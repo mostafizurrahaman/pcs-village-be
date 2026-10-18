@@ -9,12 +9,13 @@ const router: Router = Router()
 
 router.get('/my-subscription', auth(AuthRoles.USER), SubscriptionControllers.getMySubscription)
 
-router.post(
-  '/checkout',
-  auth(AuthRoles.USER),
-  validateRequest(SubscriptionValidations.createCheckoutSession),
-  SubscriptionControllers.initiateCheckout
-)
+// Stripe checkout (Commented out for RevenueCat):
+// router.post(
+//   '/checkout',
+//   auth(AuthRoles.USER),
+//   validateRequest(SubscriptionValidations.createCheckoutSession),
+//   SubscriptionControllers.initiateCheckout
+// )
 
 router.get(
   '/histories',
@@ -22,5 +23,9 @@ router.get(
   validateRequest(SubscriptionValidations.getAllHistory),
   SubscriptionControllers.getSubscriptionHistory
 )
+
+// RevenueCat Webhook:
+router.post('/revenuecat-webhook', SubscriptionControllers.revenueCatWebhook)
+router.post('/webhook', SubscriptionControllers.revenueCatWebhook)
 
 export const subscriptionRoutes = router

@@ -5,7 +5,7 @@
 // let me think
 //
 
-import type { DutyStationType } from '@repo/db'
+import type { DutyStationType } from '../DutyStation/duty-station.constant'
 import { baseRequestStatus } from './base-request.constant'
 import type { Document } from 'mongoose'
 

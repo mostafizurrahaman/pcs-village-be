@@ -4,19 +4,20 @@ import httpStatus from 'http-status'
 import { SubscriptionServices } from './subscripton.services'
 import type { TGetSubscriptionHistoryQuery } from './subscription.validation'
 
-const initiateCheckout = catchAsync(async (req, res) => {
-  const user = await getUserFromRequest(req)
-  const { planId } = req.body
-
-  const url = await SubscriptionServices.createCheckoutSession(user, planId)
-
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Checkout URL generated successfully',
-    data: url,
-  })
-})
+// Stripe checkout controller (Commented out for RevenueCat):
+// const initiateCheckout = catchAsync(async (req, res) => {
+//   const user = await getUserFromRequest(req)
+//   const { planId } = req.body
+//
+//   const url = await SubscriptionServices.createCheckoutSession(user, planId)
+//
+//   sendResponse(res, {
+//     success: true,
+//     statusCode: httpStatus.OK,
+//     message: 'Checkout URL generated successfully',
+//     data: url,
+//   })
+// })
 
 const getMySubscription = catchAsync(async (req, res) => {
   const user = await getUserFromRequest(req)
@@ -46,15 +47,28 @@ const getSubscriptionHistory = catchAsync(async (req, res) => {
   })
 })
 
-const stripeWebhook = catchAsync(async (req, res) => {
-  const sig = req.headers['stripe-signature'] as string
-  const result = await SubscriptionServices.handleWebhook(sig, req.body)
-  res.status(200).send(result)
+// Stripe webhook controller (Commented out for RevenueCat):
+// const stripeWebhook = catchAsync(async (req, res) => {
+//   const sig = req.headers['stripe-signature'] as string
+//   const result = await SubscriptionServices.handleWebhook(sig, req.body)
+//   res.status(200).send(result)
+// })
+
+// RevenueCat Webhook Controller:
+const revenueCatWebhook = catchAsync(async (req, res) => {
+  const authHeader = req.headers['authorization']
+  const result = await SubscriptionServices.handleRevenueCatWebhook(authHeader, req.body)
+  res.status(httpStatus.OK).json({
+    success: true,
+    message: 'RevenueCat webhook processed successfully',
+    data: result,
+  })
 })
 
 export const SubscriptionControllers = {
-  initiateCheckout,
+  // initiateCheckout,
   getMySubscription,
   getSubscriptionHistory,
-  stripeWebhook,
+  // stripeWebhook,
+  revenueCatWebhook,
 }

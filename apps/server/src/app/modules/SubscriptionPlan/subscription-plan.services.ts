@@ -1,4 +1,4 @@
-import { stripe } from '@app/configs/stripe.'
+// import { stripe } from '@app/configs/stripe.'
 import type { TCreatePlanPayload, TGelAllPlanQuery } from './subscription-plan.validations'
 import { SubscriptionPlan } from 'packages/db/src'
 import slugify from 'slugify'
@@ -7,10 +7,10 @@ import httpStatus from 'http-status'
 import type { PipelineStage } from 'mongoose'
 
 /**
- * Create a new Subscription Plan in both Stripe and Local Database
+ * Create a new Subscription Plan in Local Database (Stripe commented out for RevenueCat)
  */
 const createPlan = async (payload: TCreatePlanPayload) => {
-  const { name, description, price, interval, features } = payload
+  const { name, description, price, interval, features, revenueCatProductId } = payload
 
   const slug = slugify(name, {
     lower: true,
@@ -27,21 +27,23 @@ const createPlan = async (payload: TCreatePlanPayload) => {
   if (!Array.isArray(features) || features?.length === 0) {
     throw new AppError(httpStatus.BAD_REQUEST, `You have to provide the features list!`)
   }
-  // 1. Create Product in Stripe
+
+  // 1. Stripe Product & Price creation (Commented out - Replaced by RevenueCat):
+  /*
   const stripeProduct = await stripe.products.create({
     name,
     description: description as string,
   })
 
-  // 2. Create Price in Stripe
   const stripePrice = await stripe.prices.create({
     product: stripeProduct.id,
     unit_amount: Math.round(price * 100),
     recurring: { interval: interval === 'MONTH' ? 'month' : 'year' },
     currency: 'USD',
   })
+  */
 
-  // 3. Save to DB
+  // 2. Save to DB
   const plan = await SubscriptionPlan.create({
     name,
     slug,
@@ -49,7 +51,7 @@ const createPlan = async (payload: TCreatePlanPayload) => {
     price,
     interval,
     features,
-    stripePriceId: stripePrice.id,
+    ...(revenueCatProductId ? { revenueCatProductId } : {}),
     isActive: true,
   })
 

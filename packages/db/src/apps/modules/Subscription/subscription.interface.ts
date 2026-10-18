@@ -5,9 +5,11 @@ export type TSubscriptionStatusType = (typeof SubscriptionStatus)[keyof typeof S
 
 export interface ISubscription {
   user: Types.ObjectId
-  plan: Types.ObjectId
-  stripeCustomerId: string
-  stripeSubscriptionId: string
+  plan?: Types.ObjectId | undefined
+  revenueCatOriginalTransactionId?: string | undefined
+  revenueCatAppUserId?: string | undefined
+  revenueCatStore?: string | undefined
+  revenueCatProductId?: string | undefined
   status: TSubscriptionStatusType
   currentPeriodStart: Date
   currentPeriodEnd: Date

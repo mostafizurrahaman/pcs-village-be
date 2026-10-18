@@ -31,10 +31,11 @@ const subscriptionPlanSchema = new Schema<ISubscriptionPlanDoc>(
       enum: planIntervalValues,
       default: PlanInterval.MONTH,
     },
-    stripePriceId: {
+    revenueCatProductId: {
       type: String,
-      required: true,
-      unique: true,
+      required: false,
+      sparse: true,
+      index: true,
     },
     features: {
       type: [String],

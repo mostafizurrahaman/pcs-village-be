@@ -6,8 +6,7 @@ const SubscriptionHistorySchema = new Schema<ISubscriptionHistoryDoc>(
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     plan: { type: Schema.Types.ObjectId, ref: 'SubscriptionPlan' },
 
-    stripeSubscriptionId: String,
-    stripeCustomerId: String,
+    revenueCatOriginalTransactionId: String,
 
     eventType: {
       type: String,

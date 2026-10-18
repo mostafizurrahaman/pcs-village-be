@@ -1,3 +1,8 @@
+/**
+ * Stripe Subscription Webhook Utilities (Commented out - Replaced by RevenueCat)
+ */
+
+/*
 import { stripe } from '@app/configs/stripe.'
 import { logger } from '@app/libs/logger'
 import { Types } from 'mongoose'
@@ -9,6 +14,7 @@ import {
   SubscriptionStatus,
 } from '@repo/db'
 import type Stripe from 'stripe'
+
 // 1. Checkout session.completed
 export const handleCheckSession = async (event: Stripe.Event) => {
   const session = event.data.object as Stripe.Checkout.Session
@@ -136,7 +142,6 @@ export const handleInvoicePaymentSuccedded = async (event: Stripe.Event) => {
 }
 
 // 3. Invoice Payment Failed:
-
 export const handleInvoicePaymentFailed = async (event: Stripe.Event) => {
   const invoice = event.data.object as Stripe.Invoice
 
@@ -168,7 +173,6 @@ export const handleInvoicePaymentFailed = async (event: Stripe.Event) => {
 }
 
 // 4. Subscription update Event:
-
 export const handleSubscriptionUpdated = async (event: Stripe.Event) => {
   const subscription = event.data.object as Stripe.Subscription
 
@@ -227,3 +231,4 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
     })
   }
 }
+*/

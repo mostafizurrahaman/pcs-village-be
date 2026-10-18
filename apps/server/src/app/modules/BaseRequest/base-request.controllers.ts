@@ -64,7 +64,7 @@ const getAllBaseRequests = catchAsync(async (req, res) => {
 
 // Resolve the base request:
 const resolveRequest = catchAsync(async (req, res) => {
-  const requestId = req.params.id
+  const requestId = req.params.id as string
   const result = await baseRequestServices.resolveBaseRequest(requestId, req.body)
 
   sendResponse(res, {

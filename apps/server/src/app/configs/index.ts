@@ -29,12 +29,16 @@ const envSchema = z.object({
   NODE_EAMIL_HOST: z.string(),
   NODE_EMAIL_PORT: z.string().transform((val) => Number(val)),
 
-  // Stripe
-  STRIPE_SECRET_KEY: z.string(),
-  STRIPE_PUBLISHABLE_KEY: z.string(),
-  STRIPE_WEBOOK_KEY: z.string(),
-  STRIPE_SUCCESS_URL: z.string().url(),
-  STRIPE_CANCEL_URL: z.string().url(),
+  // Stripe (Optional / Legacy)
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
+  STRIPE_WEBOOK_KEY: z.string().optional(),
+  STRIPE_SUCCESS_URL: z.string().url().optional(),
+  STRIPE_CANCEL_URL: z.string().url().optional(),
+
+  // RevenueCat
+  REVENUECAT_WEBHOOK_SECRET: z.string().optional(),
+  REVENUECAT_API_KEY: z.string().optional(),
   // STRIPE_FIXED_FEE: z.string().transform(Number),
   // STRIPE_FEE: z.string().transform(Number),
 
@@ -110,14 +114,19 @@ const configs = {
     host: env.NODE_EAMIL_HOST,
   },
 
+  // Stripe (Legacy / Optional)
   stripe: {
     secretKey: env.STRIPE_SECRET_KEY,
     publishableKey: env.STRIPE_PUBLISHABLE_KEY,
     webhookKey: env.STRIPE_WEBOOK_KEY,
     successUrl: env.STRIPE_SUCCESS_URL,
     cancelUrl: env.STRIPE_CANCEL_URL,
-    // fixedFee: env.STRIPE_FIXED_FEE,
-    // percentage: env.STRIPE_FEE,
+  },
+
+  // RevenueCat
+  revenueCat: {
+    webhookSecret: env.REVENUECAT_WEBHOOK_SECRET,
+    apiKey: env.REVENUECAT_API_KEY,
   },
 
   jwt: {

@@ -16,6 +16,7 @@ const createPlanSchema = z.object({
     description: optionalString('Description'),
     price: positiveNumber('Price'),
     interval: enumString(planIntervalValues, 'Interval'),
+    revenueCatProductId: optionalString('RevenueCat Product ID'),
     features: z
       .array(requiredString('Feature'))
       .min(1, { message: 'Minimum one feature is required!' }),

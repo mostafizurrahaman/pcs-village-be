@@ -5,9 +5,8 @@ export type TSubscriptionHistoryEventType = keyof typeof historyEventType
 
 export interface ISubscriptionHistory {
   user: Types.ObjectId
-  plan: Types.ObjectId
-  stripeSubscriptionId: string
-  stripeCustomerId: string
+  plan?: Types.ObjectId | undefined
+  revenueCatOriginalTransactionId?: string | undefined
   status: string
   eventType: TSubscriptionHistoryEventType
   currentPeriodEnd: Date
