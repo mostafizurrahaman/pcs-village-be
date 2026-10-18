@@ -4,6 +4,8 @@ node_modules/
 
 # --- Environment Variables (Crucial for Security) ---
 # This ignores .env files in the root and inside all subfolders
+.env
+.env.*
 !.env.example
 
 # --- Turborepo & Build Outputs ---
@@ -11,7 +13,6 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
-
 
 # --- MongoDB Specific ---
 # If you ever run MongoDB locally and store data in the project
@@ -40,7 +41,3 @@ yarn-error.log*
 # --- Testing ---
 coverage/
 .nyc_output
-
-# React email: 
-.react-email
-config.bat

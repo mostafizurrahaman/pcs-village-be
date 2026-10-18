@@ -33,7 +33,7 @@ router.get(
 // Get single user by ID
 router.delete(
   '/:id',
-  auth(AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN, AuthRoles.USER),
+  auth(AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN),
   validateRequest(UserValidations.getSingleUserSchema),
   userControllers.deleteUserById
 )
