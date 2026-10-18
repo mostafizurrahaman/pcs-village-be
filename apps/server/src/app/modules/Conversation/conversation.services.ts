@@ -7,6 +7,7 @@ import { Types, type PipelineStage } from 'mongoose'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import { uploadMultipleFileToS3 } from 'packages/media-hub/src'
+import { BlockServices } from '../Block/block.services'
 export const searchableFields = ['opponentName', 'opponentEmail']
 
 const getAllConversations = async (user: IUser, query: TGetAllConversationQueryType) => {
@@ -48,6 +49,17 @@ const getAllConversations = async (user: IUser, query: TGetAllConversationQueryT
       },
     },
   })
+
+  const blockedUserIds = await BlockServices.getBlockedUserIds(user?._id)
+  if (blockedUserIds.length > 0) {
+    pipeline.push({
+      $match: {
+        opponent: {
+          $nin: blockedUserIds,
+        },
+      },
+    })
+  }
 
   pipeline.push({
     $lookup: {
@@ -215,6 +227,17 @@ const getAllMessage = async (user: IUser, query: TGetAllMessageQueryType) => {
 
   if (!conversation) {
     throw new AppError(httpStatus.NOT_FOUND, `Conversation doesn't exists!`)
+  }
+
+  // 2. Check if opponent is blocked
+  const opponentId = conversation.participant.find(
+    (p) => p.toString() !== user?._id?.toString()
+  )
+  if (opponentId) {
+    const isBlocked = await BlockServices.isMutualBlocked(user._id, opponentId)
+    if (isBlocked) {
+      throw new AppError(httpStatus.FORBIDDEN, 'You cannot access messages with this user!')
+    }
   }
 
   pipeline.push({

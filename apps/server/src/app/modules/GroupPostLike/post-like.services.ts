@@ -9,6 +9,7 @@ import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import type { Types } from 'mongoose'
 import { notificationServices } from '../Notification/notification.services'
+import { BlockServices } from '../Block/block.services'
 
 const toggleLike = async (user: IUser, postId: string) => {
   // 1. Check if the post exists
@@ -16,6 +17,14 @@ const toggleLike = async (user: IUser, postId: string) => {
 
   if (!postExists) {
     throw new AppError(httpStatus.NOT_FOUND, `Post doesn't exist!`)
+  }
+
+  // Check if mutual blocked with post author
+  if (postExists.author) {
+    const isBlocked = await BlockServices.isMutualBlocked(user._id, postExists.author)
+    if (isBlocked) {
+      throw new AppError(httpStatus.FORBIDDEN, `Cannot interact with this post!`)
+    }
   }
 
   // 2. check membership:

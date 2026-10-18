@@ -19,6 +19,7 @@ import {
 } from 'packages/media-hub/src'
 import mongoose, { Types, type PipelineStage } from 'mongoose'
 import { logger } from '@app/libs/logger'
+import { BlockServices } from '../Block/block.services'
 
 // 1. create Community post :
 const createCommunityPost = async (
@@ -161,12 +162,20 @@ const updateCommunityPost = async (
 }
 
 // 4. Get post by id:
-const getPostById = async (postId: string) => {
+const getPostById = async (postId: string, user?: IUser) => {
   const post = await CommunityPost.findById(postId)
 
   if (!post) {
     throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
   }
+
+  if (user && post.author) {
+    const isBlocked = await BlockServices.isMutualBlocked(user._id, post.author)
+    if (isBlocked) {
+      throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
+    }
+  }
+
   return post
 }
 
@@ -271,17 +280,19 @@ const getUserCommunityPostsByUserId = async (user: IUser, query: TGetUserCommuni
     if (!futureStation) {
       throw new AppError(httpStatus.NOT_FOUND, `Future station doesn't exists!`)
     }
+    stationIds.push(futureStation?._id)
   }
-  stationIds.push(futureStation?._id)
+  const blockedIds = await BlockServices.getBlockedUserIds(user?._id)
 
   const pipeline: PipelineStage[] = []
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const matchingStage: PipelineStage = {
+  const matchingStage: any = {
     $match: {
       station: {
         $in: stationIds,
       },
+      ...(blockedIds.length > 0 ? { author: { $nin: blockedIds } } : {}),
       isHidden: {
         $ne: true,
       },

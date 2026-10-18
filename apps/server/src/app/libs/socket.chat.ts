@@ -15,6 +15,7 @@ import httpStatus from 'http-status'
 import configs from '@app/configs'
 import { logger } from './logger'
 import type { Types } from 'mongoose'
+import { BlockServices } from '@app/modules/Block/block.services'
 
 // 1. Server to client events types:
 interface IServerToClientEvents {
@@ -182,6 +183,21 @@ export const setupChatServer = async (io: TChatServer) => {
           socket.emit('socket_error', {
             message: `Conversation doesn't exists!`,
           })
+          return
+        }
+
+        // Check if opponent is blocked:
+        const opponentId = conversation.participant.find(
+          (p) => p.toString() !== user?._id?.toString()
+        )
+        if (opponentId) {
+          const isBlocked = await BlockServices.isMutualBlocked(user._id, opponentId)
+          if (isBlocked) {
+            socket.emit('socket_error', {
+              message: 'You cannot send messages to this user!',
+            })
+            return
+          }
         }
 
         // 2. Post the message:

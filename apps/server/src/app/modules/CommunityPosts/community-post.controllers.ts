@@ -54,9 +54,10 @@ const updateCommunityPost = catchAsync(async (req, res) => {
 
 // 4. Get Community Post by id:
 const getCommunityPostById = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
   const postId = req.params.id as string
 
-  const result = await communityPostServices.getPostById(postId)
+  const result = await communityPostServices.getPostById(postId, user)
 
   sendResponse(res, {
     success: true,

@@ -78,9 +78,10 @@ const getGroupAllMembers = catchAsync(async (req, res) => {
 })
 
 const getMemberProfileById = catchAsync(async (req, res) => {
+  const user = await getUserFromRequest(req)
   const memberId = req.params.id as string
 
-  const result = await groupServices.getMemberProfilebyId(memberId)
+  const result = await groupServices.getMemberProfilebyId(memberId, user)
 
   sendResponse(res, {
     success: true,

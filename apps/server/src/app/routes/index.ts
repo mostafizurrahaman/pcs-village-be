@@ -19,6 +19,7 @@ import { subscriptionRoutes } from '@app/modules/Subscription/subscription.route
 import { subscriptionPlanRoutes } from '@app/modules/SubscriptionPlan/subscription-plan.routes'
 import { UserRoutes } from '@app/modules/User/user.routes'
 import { waveRoutes } from '@app/modules/Wave/wave.routes'
+import { blockRoutes } from '@app/modules/Block/block.routes'
 import express, { Router } from 'express'
 
 const router: Router = express.Router()
@@ -107,6 +108,10 @@ const routes = [
   {
     path: '/ads',
     route: adsRoutes,
+  },
+  {
+    path: '/blocks',
+    route: blockRoutes,
   },
 ]
 

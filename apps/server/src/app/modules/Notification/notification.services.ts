@@ -5,6 +5,7 @@ import mongoose, { type ClientSession, type PipelineStage, Types } from 'mongoos
 import { AppError } from '@repo/shared'
 import httpStatus from 'http-status'
 import { logger } from '@app/libs/logger'
+import { BlockServices } from '../Block/block.services'
 
 type CreateNotificationPayload = {
   receiver: string | Types.ObjectId
@@ -23,6 +24,17 @@ const createAndSendNotification = async (
   payload: CreateNotificationPayload,
   session: ClientSession | null
 ) => {
+  // Check if mutual blocked
+  if (payload.sender && payload.receiver) {
+    const isBlocked = await BlockServices.isMutualBlocked(
+      payload.sender,
+      payload.receiver
+    )
+    if (isBlocked) {
+      return null
+    }
+  }
+
   const notification = await Notification.create(
     [
       {
@@ -119,7 +131,16 @@ const getAllNotifications = async (userId: string, query: TGetAllNotifications) 
 
   logger.info('userID', userId)
 
-  const pipeline: PipelineStage[] = [{ $match: { receiver: new Types.ObjectId(userId) } }]
+  const blockedIds = await BlockServices.getBlockedUserIds(userId)
+
+  const pipeline: PipelineStage[] = [
+    {
+      $match: {
+        receiver: new Types.ObjectId(userId),
+        ...(blockedIds.length > 0 ? { sender: { $nin: blockedIds } } : {}),
+      },
+    },
+  ]
 
   pipeline.push(
     {

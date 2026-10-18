@@ -4,6 +4,7 @@ import httpStatus from 'http-status'
 import { notificationServices } from '../Notification/notification.services'
 import type { Types } from 'mongoose'
 import { postLikeValidation } from './post-like.validation'
+import { BlockServices } from '../Block/block.services'
 
 const toggleLike = async (user: IUser, postId: string) => {
   // 1. Check if the post exists
@@ -11,6 +12,14 @@ const toggleLike = async (user: IUser, postId: string) => {
 
   if (!postExists) {
     throw new AppError(httpStatus.NOT_FOUND, `Post doesn't exist!`)
+  }
+
+  // Check if post author is mutually blocked
+  if (postExists.author) {
+    const isBlocked = await BlockServices.isMutualBlocked(user._id, postExists.author)
+    if (isBlocked) {
+      throw new AppError(httpStatus.FORBIDDEN, `Cannot interact with this post!`)
+    }
   }
 
   // 2. Try to find and REMOVE the like (Toggle Off)

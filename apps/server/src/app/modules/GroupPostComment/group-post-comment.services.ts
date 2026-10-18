@@ -15,6 +15,7 @@ import type {
   TGetAllCommentsByPostIdQuery,
 } from './group-post-comment.validations'
 import { notificationServices } from '../Notification/notification.services'
+import { BlockServices } from '../Block/block.services'
 
 const createComment = async (
   user: IUser,
@@ -26,6 +27,14 @@ const createComment = async (
   // 1. Verify Group Post exists
   const existingPost = await GroupPost.findById(post)
   if (!existingPost) throw new AppError(httpStatus.NOT_FOUND, 'Group post not found!')
+
+  // Check if mutual blocked with post author
+  if (existingPost.author) {
+    const isBlocked = await BlockServices.isMutualBlocked(user._id, existingPost.author)
+    if (isBlocked) {
+      throw new AppError(httpStatus.FORBIDDEN, 'Cannot comment on this post!')
+    }
+  }
 
   // 2. EXTRA VALIDATION: Check if user is an ACTIVE member of the group associated with the post
   const isMember = await GroupMember.findOne({
@@ -95,8 +104,22 @@ const getAllCommentsByPostID = async (
     throw new AppError(httpStatus.NOT_FOUND, `Post doesn't exists!`)
   }
 
+  if (post.author) {
+    const isAuthorBlocked = await BlockServices.isMutualBlocked(user._id, post.author)
+    if (isAuthorBlocked) {
+      throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
+    }
+  }
+
+  const blockedIds = await BlockServices.getBlockedUserIds(user?._id)
+
   const comments = await GroupPostComment.aggregate([
-    { $match: { post: new Types.ObjectId(postId) } },
+    {
+      $match: {
+        post: new Types.ObjectId(postId),
+        ...(blockedIds.length > 0 ? { author: { $nin: blockedIds } } : {}),
+      },
+    },
     {
       $lookup: {
         from: 'users',

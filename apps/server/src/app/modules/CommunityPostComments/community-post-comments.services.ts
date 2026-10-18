@@ -10,6 +10,7 @@ import { deleteMultipleFilesFromS3, uploadMultipleFileToS3 } from 'packages/medi
 import type { Types } from 'mongoose'
 import mongoose from 'mongoose'
 import { notificationServices } from '../Notification/notification.services'
+import { BlockServices } from '../Block/block.services'
 
 // 1. create comment:
 const createComment = async (
@@ -23,6 +24,14 @@ const createComment = async (
   const communityPost = await CommunityPost.findById(post)
   if (!communityPost) {
     throw new AppError(httpStatus.NOT_FOUND, `Community post doesn't exists!`)
+  }
+
+  // check if blocked
+  if (communityPost.author) {
+    const isBlocked = await BlockServices.isMutualBlocked(user._id, communityPost.author)
+    if (isBlocked) {
+      throw new AppError(httpStatus.FORBIDDEN, `Cannot comment on this post!`)
+    }
   }
 
   // check parent comment existence :
@@ -161,10 +170,20 @@ const getAllCommentsByPostID = async (
     throw new AppError(httpStatus.NOT_FOUND, `Post deosn't exists!`)
   }
 
+  if (post.author) {
+    const isPostAuthorBlocked = await BlockServices.isMutualBlocked(user._id, post.author)
+    if (isPostAuthorBlocked) {
+      throw new AppError(httpStatus.NOT_FOUND, `Post not found!`)
+    }
+  }
+
+  const blockedIds = await BlockServices.getBlockedUserIds(user?._id)
+
   const comments = await CommunityComment.aggregate([
     {
       $match: {
         post: post?._id,
+        ...(blockedIds.length > 0 ? { author: { $nin: blockedIds } } : {}),
       },
     },
     {

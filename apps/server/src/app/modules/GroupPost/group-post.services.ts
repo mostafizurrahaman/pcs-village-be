@@ -22,6 +22,7 @@ import {
 } from 'packages/media-hub/src'
 import mongoose, { Types, type PipelineStage } from 'mongoose'
 import { logger } from '@app/libs/logger'
+import { BlockServices } from '../Block/block.services'
 
 // 1. create Community post :
 const createGroupPost = async (
@@ -304,12 +305,15 @@ const getUserGroupPostsByUserId = async (user: IUser, query: TGetAllGroupPostsQu
     throw new AppError(httpStatus.BAD_REQUEST, `You don't have access in this group!`)
   }
 
+  const blockedIds = await BlockServices.getBlockedUserIds(user?._id)
+
   const pipeline: PipelineStage[] = []
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const matchingStage: PipelineStage = {
+  const matchingStage: any = {
     $match: {
       group: group?._id,
+      ...(blockedIds.length > 0 ? { author: { $nin: blockedIds } } : {}),
       isHidden: {
         $ne: true,
       },

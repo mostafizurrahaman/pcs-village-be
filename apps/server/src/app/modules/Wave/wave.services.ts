@@ -6,20 +6,27 @@ import mongoose from 'mongoose'
 import { notificationServices } from '../Notification/notification.services'
 import { NotificationType } from 'packages/db/src/apps/modules/Notification/notification.constant'
 import type { Types } from 'mongoose'
+import { BlockServices } from '../Block/block.services'
 
 // 1. Send Wave
 const createWave = async (user: IUser, payload: ICreateWavePayload) => {
   const { receiver: receiverId } = payload
 
-  // 1.  Check is receiver exists ?
+  // 1. Check is receiver exists ?
   const receiver = await User.findById(receiverId)
   if (!receiver) {
     throw new AppError(httpStatus.NOT_FOUND, `Receiver account doesn't exists!`)
   }
 
-  // 2. Check reciver and your id is same ?:
+  // 2. Check receiver and your id is same ?:
   if (receiver?._id?.toString() === user?._id?.toString()) {
     throw new AppError(httpStatus.BAD_REQUEST, `You cann't send wave yourself!`)
+  }
+
+  // 2.1 Check if mutual blocked
+  const isBlocked = await BlockServices.isMutualBlocked(user._id, receiver._id)
+  if (isBlocked) {
+    throw new AppError(httpStatus.FORBIDDEN, `Cannot interact with this user!`)
   }
 
   // 3. Check any wave exists ?:
@@ -135,6 +142,12 @@ const acceptWave = async (user: IUser, id: string) => {
     // 2. Check is this wave send to you?:
     if (wave.receiver?.toString() !== user?._id?.toString()) {
       throw new AppError(httpStatus.BAD_REQUEST, `You don't have permission to back this wave!`)
+    }
+
+    // 2.1 Check if mutual blocked
+    const isBlocked = await BlockServices.isMutualBlocked(user._id, wave.sender)
+    if (isBlocked) {
+      throw new AppError(httpStatus.FORBIDDEN, `Cannot interact with this user!`)
     }
 
     // 3. Check the wave current status :

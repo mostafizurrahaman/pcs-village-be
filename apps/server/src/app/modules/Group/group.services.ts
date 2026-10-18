@@ -16,6 +16,7 @@ import httpStatus from 'http-status'
 import configs from '@app/configs'
 import mongoose, { Types, type PipelineStage } from 'mongoose'
 import type { TGetUserAllGroupMembersQuery, TGetUserAllGroupQuery } from './group.validtions'
+import { BlockServices } from '../Block/block.services'
 
 // 1. Find or create group:
 const findOrCreateSuggestedGroup = async (payload: {
@@ -688,6 +689,8 @@ const getAllGroupMembersById = async (
     throw new AppError(httpStatus.NOT_FOUND, `You aren't member of this group!`)
   }
 
+  const blockedIds = await BlockServices.getBlockedUserIds(user?._id)
+
   const pipeline: PipelineStage[] = []
 
   pipeline.push({
@@ -695,6 +698,7 @@ const getAllGroupMembersById = async (
       group: group?._id,
       user: {
         $ne: user?._id,
+        ...(blockedIds.length > 0 ? { $nin: blockedIds } : {}),
       },
     },
   })
@@ -996,7 +1000,14 @@ const getAllGroupMembersById = async (
 }
 
 // 7. Get member profile:
-const getMemberProfilebyId = async (memberId: string) => {
+const getMemberProfilebyId = async (memberId: string, currentUser?: IUser) => {
+  if (currentUser) {
+    const isBlocked = await BlockServices.isMutualBlocked(currentUser._id, memberId)
+    if (isBlocked) {
+      throw new AppError(httpStatus.NOT_FOUND, `User doesn't exist!`)
+    }
+  }
+
   // 1. Check is member exists:
   const member = await User.aggregate([
     {
