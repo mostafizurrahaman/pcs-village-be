@@ -1187,7 +1187,7 @@ const refreshToken = async (refreshToken: string) => {
     );
   }
 
-  if (user.status !== AuthStatus.ACTIVE) {
+  if (user.status !== AuthStatus.ACTIVE && user.status !== AuthStatus.PENDING) {
     throw new AppError(httpStatus.FORBIDDEN, "Your account is not active");
   }
 
@@ -1457,6 +1457,11 @@ const handleOAuthLogin = async ({
   // 4. Check if user has an existing UserProfile
   const existingProfile = await UserProfile.findOne({ user: user._id });
   const isProfileCompleted = !!existingProfile;
+
+  if (user.status === AuthStatus.PENDING && isProfileCompleted) {
+    user.status = AuthStatus.ACTIVE;
+    await user.save();
+  }
 
   // 5. Generate access and refresh tokens
   const jwtPayload: IJwtUserPayload = {

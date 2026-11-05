@@ -96,14 +96,14 @@ router.post(
 // 10.Get me:
 router.get(
   '/me',
-  auth(AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN, AuthRoles.USER),
+  auth(AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN, AuthRoles.USER, { allowPending: true }),
   AuthController.getMe
 )
 
 // 11. Update Profile:
 router.patch(
   '/update-profile',
-  auth(AuthRoles.USER, AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN),
+  auth(AuthRoles.USER, AuthRoles.ADMIN, AuthRoles.SUPER_ADMIN, { allowPending: true }),
   multerFactory({
     category: 'image',
     maxSizeInMB: 5,

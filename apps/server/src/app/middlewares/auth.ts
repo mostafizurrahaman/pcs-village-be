@@ -3,7 +3,16 @@ import { AuthStatus, User, type TAuthRole } from '@repo/db'
 import httpStatus from 'http-status'
 import configs from '@app/configs'
 
-export const auth = (...requiredRoles: TAuthRole[]) => {
+export type TAuthOption = { allowPending?: boolean }
+
+export const auth = (...params: (TAuthRole | TAuthOption)[]) => {
+  const options = params.find(
+    (param): param is TAuthOption => typeof param === 'object' && param !== null
+  )
+  const requiredRoles = params.filter(
+    (param): param is TAuthRole => typeof param === 'string'
+  )
+
   return catchAsync(async (req, res, next) => {
     /**
      * 1. Extract access token
@@ -54,7 +63,11 @@ export const auth = (...requiredRoles: TAuthRole[]) => {
       )
     }
 
-    if (user.status !== AuthStatus.ACTIVE) {
+    const isAllowedStatus = options?.allowPending
+      ? user.status === AuthStatus.ACTIVE || user.status === AuthStatus.PENDING
+      : user.status === AuthStatus.ACTIVE
+
+    if (!isAllowedStatus) {
       throw new AppError(httpStatus.FORBIDDEN, 'Your account is not active')
     }
 
