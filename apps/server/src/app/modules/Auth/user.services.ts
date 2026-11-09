@@ -1098,10 +1098,7 @@ const updateProfile = async (
     // Rollback changes if any error occurs
     await session.abortTransaction();
     session.endSession();
-    throw new AppError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      error.message || "Failed to update profile",
-    );
+    throw error
   }
 };
 
