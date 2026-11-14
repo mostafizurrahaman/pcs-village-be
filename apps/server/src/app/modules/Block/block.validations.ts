@@ -22,7 +22,7 @@ const getMyBlockedUsersSchema = z.object({
   query: z.object({
     page: optionalNumber('Page'),
     limit: optionalNumber('Limit'),
-    searchTerm: optionalString('Search Term'),
+    searchTerm: optionalString('Search Term').nullish(),
   }),
 })
 
