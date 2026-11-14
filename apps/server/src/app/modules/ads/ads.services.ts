@@ -4,7 +4,7 @@ import type { PipelineStage } from 'mongoose'
 import { AppError } from 'packages/shared/src'
 import httpStatus from 'http-status'
 import { uploadSingleFileToS3 } from 'packages/media-hub/src'
-import { backup } from 'node:sqlite'
+import { BlockServices } from '../Block/block.services'
 
 // 1. Create Ads:
 const createAds = async (user: IUser, adData: TCreateAdsPayload, file: Express.Multer.File) => {
@@ -116,10 +116,20 @@ const getMyAds = async (user: IUser, query: TGetMyAdsQuery) => {
   }
 }
 
-const getAllAds = async (query: TGetMyAdsQuery) => {
+const getAllAds = async (user: IUser, query: TGetMyAdsQuery) => {
   const { page = 1, limit = 10, searchTerm, sortBy, sortOrder, fromDate, toDate } = query
 
+  const blockedIds = user?._id ? await BlockServices.getBlockedUserIds(user._id) : []
+
   const pipeline: PipelineStage[] = []
+
+  if (blockedIds.length > 0) {
+    pipeline.push({
+      $match: {
+        user: { $nin: blockedIds },
+      },
+    })
+  }
 
   pipeline.push({
     $lookup: {

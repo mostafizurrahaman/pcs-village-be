@@ -253,6 +253,17 @@ export const setupChatServer = async (io: TChatServer) => {
         socket.emit('socket_error', {
           message: `Conversation doesn't exists!`,
         })
+        return
+      }
+
+      const opponentId = conversation.participant.find(
+        (p) => p.toString() !== user?._id?.toString()
+      )
+      if (opponentId) {
+        const isBlocked = await BlockServices.isMutualBlocked(user._id, opponentId)
+        if (isBlocked) {
+          return
+        }
       }
 
       // 2. send disply typing event:
@@ -280,6 +291,17 @@ export const setupChatServer = async (io: TChatServer) => {
         socket.emit('socket_error', {
           message: `Conversation doesn't exists!`,
         })
+        return
+      }
+
+      const opponentId = conversation.participant.find(
+        (p) => p.toString() !== user?._id?.toString()
+      )
+      if (opponentId) {
+        const isBlocked = await BlockServices.isMutualBlocked(user._id, opponentId)
+        if (isBlocked) {
+          return
+        }
       }
 
       // 2. Mark all messages of this conversation:

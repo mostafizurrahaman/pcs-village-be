@@ -1,4 +1,4 @@
-import { Conversation, Message, type IUser } from '@repo/db'
+import { BlockedUser, Conversation, Message, type IUser } from '@repo/db'
 import type {
   TGetAllConversationQueryType,
   TGetAllMessageQueryType,
@@ -50,16 +50,36 @@ const getAllConversations = async (user: IUser, query: TGetAllConversationQueryT
     },
   })
 
-  const blockedUserIds = await BlockServices.getBlockedUserIds(user?._id)
-  if (blockedUserIds.length > 0) {
-    pipeline.push({
-      $match: {
-        opponent: {
-          $nin: blockedUserIds,
+  pipeline.push({
+    $lookup: {
+      from: 'blockedusers',
+      let: { opponentId: '$opponent' },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $or: [
+                {
+                  $and: [
+                    { $eq: ['$blocker', new Types.ObjectId(user._id)] },
+                    { $eq: ['$blocked', '$$opponentId'] },
+                  ],
+                },
+                {
+                  $and: [
+                    { $eq: ['$blocker', '$$opponentId'] },
+                    { $eq: ['$blocked', new Types.ObjectId(user._id)] },
+                  ],
+                },
+              ],
+            },
+          },
         },
-      },
-    })
-  }
+        { $limit: 1 },
+      ],
+      as: 'blockInfo',
+    },
+  })
 
   pipeline.push({
     $lookup: {
@@ -118,6 +138,7 @@ const getAllConversations = async (user: IUser, query: TGetAllConversationQueryT
 
   pipeline.push({
     $project: {
+      opponentId: '$opponent._id',
       opponentName: '$opponent.name',
       opponentEmail: '$opponent.email',
       opponentProfileImg: '$opponent.profileImage',
@@ -125,6 +146,13 @@ const getAllConversations = async (user: IUser, query: TGetAllConversationQueryT
       lastMessage: 1,
       createdAt: '$createdAt',
       updatedAt: '$updatedAt',
+      isBlocked: { $gt: [{ $size: '$blockInfo' }, 0] },
+      blockedTimestamp: {
+        $let: {
+          vars: { b: { $arrayElemAt: ['$blockInfo', 0] } },
+          in: { $ifNull: ['$$b.createdAt', null] },
+        },
+      },
     },
   })
 
@@ -233,16 +261,20 @@ const getAllMessage = async (user: IUser, query: TGetAllMessageQueryType) => {
   const opponentId = conversation.participant.find(
     (p) => p.toString() !== user?._id?.toString()
   )
+  let blockRecord: { createdAt: Date } | null = null
   if (opponentId) {
-    const isBlocked = await BlockServices.isMutualBlocked(user._id, opponentId)
-    if (isBlocked) {
-      throw new AppError(httpStatus.FORBIDDEN, 'You cannot access messages with this user!')
-    }
+    blockRecord = await BlockedUser.findOne({
+      $or: [
+        { blocker: new Types.ObjectId(user._id), blocked: new Types.ObjectId(opponentId) },
+        { blocker: new Types.ObjectId(opponentId), blocked: new Types.ObjectId(user._id) },
+      ],
+    }).select('createdAt')
   }
 
   pipeline.push({
     $match: {
       conversation: conversation?._id,
+      ...(blockRecord ? { createdAt: { $lte: blockRecord.createdAt } } : {}),
     },
   })
 
@@ -321,6 +353,8 @@ const getAllMessage = async (user: IUser, query: TGetAllMessageQueryType) => {
       page: dataPage,
       total,
       totalPages,
+      isBlocked: !!blockRecord,
+      blockedTimestamp: blockRecord?.createdAt || null,
     },
   }
 }

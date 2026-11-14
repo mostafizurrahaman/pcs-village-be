@@ -33,8 +33,9 @@ const getMyAds = catchAsync(async (req, res) => {
 
 const getAllAds = catchAsync(async (req, res) => {
   const query = req.query
+  const user = await getUserFromRequest(req)
 
-  const adsData = await adsServices.getAllAds(query)
+  const adsData = await adsServices.getAllAds(user, query)
   sendResponse(res, {
     statusCode: 200,
     success: true,

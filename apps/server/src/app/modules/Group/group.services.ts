@@ -689,8 +689,6 @@ const getAllGroupMembersById = async (
     throw new AppError(httpStatus.NOT_FOUND, `You aren't member of this group!`)
   }
 
-  const blockedIds = await BlockServices.getBlockedUserIds(user?._id)
-
   const pipeline: PipelineStage[] = []
 
   pipeline.push({
@@ -698,8 +696,40 @@ const getAllGroupMembersById = async (
       group: group?._id,
       user: {
         $ne: user?._id,
-        ...(blockedIds.length > 0 ? { $nin: blockedIds } : {}),
       },
+    },
+  })
+
+  pipeline.push({
+    $lookup: {
+      from: 'blockedusers',
+      let: {
+        memberId: '$user',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $or: [
+                {
+                  $and: [
+                    { $eq: ['$blocker', new Types.ObjectId(user._id)] },
+                    { $eq: ['$blocked', '$$memberId'] },
+                  ],
+                },
+                {
+                  $and: [
+                    { $eq: ['$blocker', '$$memberId'] },
+                    { $eq: ['$blocked', new Types.ObjectId(user._id)] },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        { $limit: 1 },
+      ],
+      as: 'blockInfo',
     },
   })
 
@@ -892,6 +922,15 @@ const getAllGroupMembersById = async (
         },
       },
       conversationId: '$conversations._id',
+      isBlocked: {
+        $gt: [{ $size: '$blockInfo' }, 0],
+      },
+      blockedTimestamp: {
+        $let: {
+          vars: { b: { $arrayElemAt: ['$blockInfo', 0] } },
+          in: { $ifNull: ['$$b.createdAt', null] },
+        },
+      },
     },
   })
 
@@ -916,6 +955,8 @@ const getAllGroupMembersById = async (
       isIncomingWave: 1,
       isDeclinedByMe: 1,
       isDeclinedByThem: 1,
+      isBlocked: 1,
+      blockedTimestamp: 1,
       joinedAt: 1,
       createdAt: 1,
       updatedAt: 1,
