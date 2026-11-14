@@ -247,6 +247,69 @@ const signUp = async (
   }
 };
 
+const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
+
+const issueAndSendOtp = async (
+  user: IUser,
+  type: (typeof otpTypes)[keyof typeof otpTypes],
+) => {
+  const userId = user._id.toString();
+  const existingOtp = await Otp.findOne({ user: userId, type });
+
+  if (existingOtp) {
+    const lastSentAt =
+      (existingOtp as { updatedAt?: Date; createdAt?: Date }).updatedAt ??
+      (existingOtp as { createdAt?: Date }).createdAt;
+    if (lastSentAt) {
+      const elapsedMs = Date.now() - new Date(lastSentAt).getTime();
+      if (elapsedMs < OTP_RESEND_COOLDOWN_MS) {
+        const waitSeconds = Math.ceil((OTP_RESEND_COOLDOWN_MS - elapsedMs) / 1000);
+        throw new AppError(
+          httpStatus.TOO_MANY_REQUESTS,
+          `Please wait ${waitSeconds} seconds before requesting another OTP.`,
+        );
+      }
+    }
+  }
+
+  const newOtp = generateOtp({ length: configs.otpSettings.digits });
+  const savedOtp = await Otp.findOneAndUpdate(
+    { user: userId, type },
+    {
+      user: userId,
+      type,
+      otp: newOtp,
+      expiresAt: addTime(configs.otpSettings.expiresIn, "minutes", true),
+    },
+    { new: true, upsert: true },
+  );
+
+  const isSignup = type === otpTypes.SIGNUP;
+  const htmlTemplate = await renderEmail(
+    isSignup
+      ? SignupOTPEmail({
+          userFirstName: user.name,
+          companyName: configs.site.name,
+          companyLogo: configs.site.logo as string,
+          otpCode: savedOtp.otp,
+        })
+      : ResetPasswordOTPEmail({
+          userFirstName: user.name,
+          companyName: configs.site.name,
+          companyLogo: configs.site.logo as string,
+          otpCode: savedOtp.otp,
+        }),
+  );
+
+  await sendEmail({
+    to: user.email,
+    html: htmlTemplate.html,
+    subject: isSignup
+      ? "Your OTP for Account Verification"
+      : "OTP for reset password!",
+  });
+};
+
 // 2. Resend Signup otp:
 const resendSignupOTP = async (payload: IResendSignupType) => {
   const { email } = payload;
@@ -275,73 +338,7 @@ const resendSignupOTP = async (payload: IResendSignupType) => {
     throw new AppError(httpStatus.CONFLICT, "Your account already verified!");
   }
 
-  // 2. Check Otp exists ? :
-  const existingOtp = await Otp.findValidOtp(
-    user._id?.toString(),
-    otpTypes.SIGNUP,
-  );
-
-  // 3. If existing otp still valid resend otp:
-  if (existingOtp) {
-    // Render Signup Template:
-    const htmlTemplate = await renderEmail(
-      SignupOTPEmail({
-        userFirstName: user.name,
-        companyName: configs.site.name,
-        companyLogo: configs.site.logo as string,
-        otpCode: existingOtp?.otp as string,
-      }),
-    );
-
-    //  Send OTP with rendered template
-    await sendEmail({
-      to: user.email,
-      html: htmlTemplate.html,
-      subject: "Your OTP for Account Verification",
-    });
-
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "An OTP has already been sent and is still valid. Please check your email or wait for it to expire.",
-    );
-  }
-
-  // 4. Generate new otp:
-  const newOtp = generateOtp({ length: 6 });
-
-  // 5. Create OTP:
-  const savedOtp = await Otp.findOneAndUpdate(
-    {
-      user: user._id.toString(),
-      type: otpTypes.SIGNUP,
-    },
-    {
-      user: user._id.toString(),
-      type: otpTypes.SIGNUP,
-      otp: newOtp,
-      expiresAt: addTime(configs.otpSettings.expiresIn, "minutes", true),
-    },
-    {
-      new: true,
-    },
-  );
-
-  // 6. Render Signup Template:
-  const htmlTemplate = await renderEmail(
-    SignupOTPEmail({
-      userFirstName: user.name,
-      companyName: configs.site.name,
-      companyLogo: configs.site.logo as string,
-      otpCode: savedOtp?.otp as string,
-    }),
-  );
-
-  // 7. Send OTP with rendered template
-  await sendEmail({
-    to: user.email,
-    html: htmlTemplate.html,
-    subject: "Your OTP for Account Verification",
-  });
+  await issueAndSendOtp(user, otpTypes.SIGNUP);
 
   return {
     geneated: true,
@@ -493,57 +490,8 @@ const forgotPassword = async (payload: IForgotPasswordType) => {
     throw new AppError(httpStatus.BAD_REQUEST, "Your account is not verified!");
   }
 
-  // 4. Has valid otp for reset password :
-  const exitingOtp = await Otp.findValidOtp(
-    user._id.toString(),
-    otpTypes.RESET,
-  );
-  if (exitingOtp) {
-    throw new AppError(
-      httpStatus.TOO_MANY_REQUESTS,
-      "Please wait before requesting another OTP",
-    );
-  } else {
-    // 8. Generate new otp
-    const newOtp = generateOtp({
-      length: configs.otpSettings.digits,
-    });
-
-    // 9. Store reset password otp:
-    const otp = await Otp.findOneAndUpdate(
-      {
-        user: user?._id?.toString(),
-        type: otpTypes.RESET,
-      },
-      {
-        user: user?._id?.toString(),
-        type: otpTypes.RESET,
-        expiresAt: addTime(configs.otpSettings.expiresIn, "minutes"),
-        otp: newOtp,
-      },
-      {
-        new: true,
-        upsert: true,
-      },
-    );
-
-    // 6. Render Reset password otp template:
-    const htmlTemplate = await renderEmail(
-      ResetPasswordOTPEmail({
-        userFirstName: user.name,
-        companyName: configs.site.name,
-        companyLogo: configs.site.logo as string,
-        otpCode: otp?.otp as string,
-      }),
-    );
-
-    // 7. Send OTP with rendered template
-    await sendEmail({
-      to: user.email,
-      html: htmlTemplate.html,
-      subject: "OTP for reset password!",
-    });
-  }
+  // 4. Issue and send OTP (respects 1 min cooldown, 5 min expiry)
+  await issueAndSendOtp(user as unknown as IUser, otpTypes.RESET);
 };
 
 // 6. Verify Reset password otp:
@@ -636,73 +584,7 @@ const resendOTP = async (payload: IResendSignupType) => {
     );
   }
 
-  // 2. Check Otp exists ? :
-  const existingOtp = await Otp.findValidOtp(
-    user._id?.toString(),
-    otpTypes.RESET,
-  );
-
-  // 3. If existing otp still valid resend otp:
-  if (existingOtp) {
-    // Render Signup Template:
-    const htmlTemplate = await renderEmail(
-      ResetPasswordOTPEmail({
-        userFirstName: user.name,
-        companyName: configs.site.name,
-        companyLogo: configs.site.logo as string,
-        otpCode: existingOtp?.otp as string,
-      }),
-    );
-
-    //  Send OTP with rendered template
-    await sendEmail({
-      to: user.email,
-      html: htmlTemplate.html,
-      subject: "OTP for reset password!",
-    });
-
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "An OTP has already been sent and is still valid. Please check your email or wait for it to expire.",
-    );
-  }
-
-  // 4. Generate new otp:
-  const newOtp = generateOtp({ length: 6 });
-
-  // 5. Create OTP:
-  const savedOtp = await Otp.findOneAndUpdate(
-    {
-      user: user._id.toString(),
-      type: otpTypes.RESET,
-    },
-    {
-      user: user._id.toString(),
-      type: otpTypes.RESET,
-      otp: newOtp,
-      expiresAt: addTime(configs.otpSettings.expiresIn, "minutes", true),
-    },
-    {
-      new: true,
-    },
-  );
-
-  // 6. Render Signup Template:
-  const htmlTemplate = await renderEmail(
-    ResetPasswordOTPEmail({
-      userFirstName: user.name,
-      companyName: configs.site.name,
-      companyLogo: configs.site.logo as string,
-      otpCode: savedOtp?.otp as string,
-    }),
-  );
-
-  // 7. Send OTP with rendered template
-  await sendEmail({
-    to: user.email,
-    html: htmlTemplate.html,
-    subject: "OTP for reset password!",
-  });
+  await issueAndSendOtp(user, otpTypes.RESET);
 
   return {
     geneated: true,
