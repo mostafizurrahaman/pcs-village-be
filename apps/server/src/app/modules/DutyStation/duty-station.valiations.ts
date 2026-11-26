@@ -12,6 +12,7 @@ import z from 'zod'
 const createDutyStation = z.object({
   body: z.object({
     name: requiredString('Duty station name'),
+    branch: optionalString('Branch ID'),
     country: requiredString('Country'),
     state: requiredString('State'),
     city: requiredString('City'),
@@ -22,11 +23,12 @@ const createDutyStation = z.object({
 // Validation schema for updating a dutyStation by ID
 const updateDutyStation = z.object({
   body: z.object({
-    name: requiredString('Duty station name'),
-    country: requiredString('Country'),
-    state: requiredString('State'),
-    city: requiredString('City'),
-    type: enumString(DutyStationTypeValues, 'Duty station type'),
+    name: optionalString('Duty station name'),
+    branch: optionalString('Branch ID'),
+    country: optionalString('Country'),
+    state: optionalString('State'),
+    city: optionalString('City'),
+    type: enumString(DutyStationTypeValues, 'Duty station type').optional(),
   }),
   params: z.object({
     id: requiredString('Duty Station ID'),
@@ -53,6 +55,7 @@ const getAllDutyStations = z.object({
     page: optionalNumber('Page number').default(1),
     limit: optionalNumber('Items per page').default(10),
     searchTerm: optionalString('Search term'),
+    branch: optionalString('Branch ID'),
     sort: optionalString('Sort by field').default('createdAt'),
     fromDate: optionalDate("From Date (format: 'YYYY-MM-DD')"),
     toDate: optionalDate("To Date (format: 'YYYY-MM-DD')"),

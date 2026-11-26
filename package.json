@@ -4,6 +4,7 @@
   "packageManager": "pnpm@10.27.0",
   "scripts": {
     "dev": "turbo watch dev",
+    "seed:stations": "pnpm --filter server seed:stations",
     "build": "turbo build",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",

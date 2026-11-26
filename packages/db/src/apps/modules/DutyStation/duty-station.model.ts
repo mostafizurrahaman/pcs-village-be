@@ -37,6 +37,10 @@ const dutyStationSchema = new Schema<IDutyStation>(
       type: Boolean,
       default: false,
     },
+    branch: {
+      type: Schema.Types.ObjectId,
+      ref: 'Branch',
+    },
     suggestedBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',

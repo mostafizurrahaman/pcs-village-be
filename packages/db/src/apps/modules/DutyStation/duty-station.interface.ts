@@ -3,6 +3,7 @@ import type { DutyStationType } from './duty-station.constant'
 
 export interface IDutyStation extends Document {
   name: string
+  branch?: Types.ObjectId | string
   country: string
   state: string
   city: string

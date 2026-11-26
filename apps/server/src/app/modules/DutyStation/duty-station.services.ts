@@ -7,7 +7,7 @@ import configs from '@app/configs'
 
 // 1. Create Duty station:
 const createDutyStation = async (user: IUser, payload: ICreateDutyStationPayload) => {
-  const { name, country, state, city, type } = payload
+  const { name, branch, country, state, city, type } = payload
 
   if (name?.toLowerCase() === configs?.base?.name?.toLowerCase()) {
     throw new AppError(httpStatus.BAD_REQUEST, `Base name shouldn't be ${configs?.base?.name}`)
@@ -15,6 +15,7 @@ const createDutyStation = async (user: IUser, payload: ICreateDutyStationPayload
 
   const newDutyStation = {
     name,
+    ...(branch && { branch }),
     country,
     state,
     city,
@@ -51,10 +52,9 @@ const updateDutyStation = async (id: string, payload: Partial<ICreateDutyStation
 
 // 3. Get Duty station by ID:
 const getDutyStationById = async (id: string) => {
-  const existingDutyStation = await DutyStation.findById(id).populate(
-    'suggestedBy',
-    'name email profileImage'
-  )
+  const existingDutyStation = await DutyStation.findById(id)
+    .populate('suggestedBy', 'name email profileImage')
+    .populate('branch', 'name slug')
 
   if (!existingDutyStation) {
     throw new AppError(httpStatus.NOT_FOUND, GLOBAL_MESSAGES.DUTY_STATION_NOT_FOUND)
@@ -81,7 +81,7 @@ const deleteDutyStationById = async (id: string) => {
 
 // 5. get all duty stations :
 const getAllDutyStations = async (query: IGetAllDutyStationsQuery) => {
-  const { fromDate, toDate, ...filters } = query
+  const { fromDate, toDate, branch, ...filters } = query
 
   // 1. searchable fields:
   const searchableFields = ['name', 'country', 'state', 'city']
@@ -99,8 +99,14 @@ const getAllDutyStations = async (query: IGetAllDutyStationsQuery) => {
     modifiedFilters.createdAt = dateFilter
   }
 
+  if (branch) {
+    modifiedFilters.branch = branch
+  }
+
   const dutyStationQuery = new QueryBuilder<IDutyStation>(
-    DutyStation.find(modifiedFilters).populate('suggestedBy', 'name email profileImage'),
+    DutyStation.find(modifiedFilters)
+      .populate('suggestedBy', 'name email profileImage')
+      .populate('branch', 'name slug'),
     filters
   )
     .search(searchableFields)

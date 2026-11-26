@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "cross-env NODE_ENV=development tsx watch ./src/server.ts",
+    "seed:stations": "cross-env NODE_ENV=development tsx ./src/scripts/seed-stations.ts",
     "build": "tsc && tsc-alias",
     "prod:dev": "cross-env NODE_ENV=production tsx watch ./src/server.ts",
     "prod": "cross-env NODE_ENV=production  node ./dist/server.js",

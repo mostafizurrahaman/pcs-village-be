@@ -125,12 +125,32 @@ const signUp = async (
     );
   }
 
+  if (
+    currentStationExists.branch &&
+    currentStationExists.branch.toString() !== existingBranch._id.toString()
+  ) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `Current duty station does not belong to the selected branch!`,
+    );
+  }
+
   if (futureStation) {
     const futureStationExists = await DutyStation.findById(futureStation);
     if (!futureStationExists) {
       throw new AppError(
         httpStatus.NOT_FOUND,
         `Future duty station doesn't exits!`,
+      );
+    }
+
+    if (
+      futureStationExists.branch &&
+      futureStationExists.branch.toString() !== existingBranch._id.toString()
+    ) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `Future duty station does not belong to the selected branch!`,
       );
     }
   }
@@ -826,7 +846,12 @@ const updateProfile = async (
   try {
     session.startTransaction();
 
-    // 1. Validate if the provided IDs exist in the database
+    let oldProfile = await UserProfile.findOne({ user: userId }).session(
+      session,
+    );
+    const effectiveBranchId = branch || oldProfile?.branch;
+
+    // 1. Validate if the provided IDs exist in the database and match branch
     if (branch) {
       const branchExists = await Branch.findById(branch);
       if (!branchExists)
@@ -843,6 +868,28 @@ const updateProfile = async (
           httpStatus.NOT_FOUND,
           "Current duty station not found!",
         );
+
+      if (
+        currentExists.branch &&
+        effectiveBranchId &&
+        currentExists.branch.toString() !== effectiveBranchId.toString()
+      ) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "Current duty station does not belong to the selected branch!",
+        );
+      }
+    } else if (branch && oldProfile?.currentStation) {
+      const existingCurrent = await DutyStation.findById(oldProfile.currentStation);
+      if (
+        existingCurrent?.branch &&
+        existingCurrent.branch.toString() !== branch.toString()
+      ) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "Current duty station does not belong to the selected branch! Please update your current duty station.",
+        );
+      }
     }
 
     if (futureStation) {
@@ -852,6 +899,28 @@ const updateProfile = async (
           httpStatus.NOT_FOUND,
           "Future duty station not found!",
         );
+
+      if (
+        futureExists.branch &&
+        effectiveBranchId &&
+        futureExists.branch.toString() !== effectiveBranchId.toString()
+      ) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "Future duty station does not belong to the selected branch!",
+        );
+      }
+    } else if (branch && oldProfile?.futureStation) {
+      const existingFuture = await DutyStation.findById(oldProfile.futureStation);
+      if (
+        existingFuture?.branch &&
+        existingFuture.branch.toString() !== branch.toString()
+      ) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "Future duty station does not belong to the selected branch! Please update your future duty station.",
+        );
+      }
     }
 
     // 2. Handle Profile Image Upload (S3)
@@ -870,10 +939,7 @@ const updateProfile = async (
       await User.findByIdAndUpdate(userId, userUpdateData, { session });
     }
 
-    // 4. Group Transition Logic: Fetch old profile or create initial profile if new user
-    let oldProfile = await UserProfile.findOne({ user: userId }).session(
-      session,
-    );
+    // 4. Group Transition Logic: Create initial profile if new user
     if (!oldProfile) {
       if (!branch || !affiliation || !currentStation) {
         throw new AppError(

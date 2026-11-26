@@ -1,0 +1,1042 @@
+[
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Bragg",
+    "City": "Fayetteville",
+    "State/Region": "North Carolina",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Hood",
+    "City": "Killeen",
+    "State/Region": "Texas",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Carson",
+    "City": "Colorado Springs",
+    "State/Region": "Colorado",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Campbell",
+    "City": "Clarksville / Oak Grove",
+    "State/Region": "Kentucky/Tennessee",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Stewart",
+    "City": "Hinesville",
+    "State/Region": "Georgia",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Drum",
+    "City": "Watertown",
+    "State/Region": "New York",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Riley",
+    "City": "Junction City",
+    "State/Region": "Kansas",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Bliss",
+    "City": "El Paso",
+    "State/Region": "Texas",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Wainwright",
+    "City": "Fairbanks",
+    "State/Region": "Alaska",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Joint Base Elmendorf-Richardson",
+    "City": "Anchorage",
+    "State/Region": "Alaska",
+    "Country": "USA",
+    "Installation Type": "Joint Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Irwin",
+    "City": "Barstow",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Greely",
+    "City": "Delta Junction",
+    "State/Region": "Alaska",
+    "Country": "USA",
+    "Installation Type": "Army Base "
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Leonard Wood",
+    "City": "St. Robert / Waynesville",
+    "State/Region": "Missouri",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Leavenworth",
+    "City": "Leavenworth",
+    "State/Region": "Kansas",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Belvoir",
+    "City": "Fort Belvoir",
+    "State/Region": "Virginia",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Meade",
+    "City": "Odenton",
+    "State/Region": "Maryland",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Detrick ",
+    "City": "Frederick",
+    "State/Region": "Maryland",
+    "Country": "USA",
+    "Installation Type": "Army Base "
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Benning ",
+    "City": "Columbus",
+    "State/Region": "Georgia",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Rucker",
+    "City": "Daleville",
+    "State/Region": "Alabama",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Sill",
+    "City": "Lawton",
+    "State/Region": "Oklahoma",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Knox",
+    "City": "Radcliff",
+    "State/Region": "Kentucky",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Polk",
+    "City": "Leesville",
+    "State/Region": "Louisiana",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Aberdeen Proving Ground",
+    "City": "Aberdeen",
+    "State/Region": "Maryland",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Redstone Arsenal",
+    "City": "Huntsville",
+    "State/Region": "Alabama",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Schofield Barracks",
+    "City": "Wahiawa",
+    "State/Region": "Hawaii",
+    "Country": "USA",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Fort Shafter ",
+    "City": "Honolulu",
+    "State/Region": "Hawaii",
+    "Country": "USA",
+    "Installation Type": "Army Base "
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Camp Pendleton",
+    "City": "Oceanside",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Marine Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Camp Lejeune",
+    "City": "Jacksonville",
+    "State/Region": "North Carolina",
+    "Country": "USA",
+    "Installation Type": "Marine Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Marine Corps Base Quantico",
+    "City": "Quantico",
+    "State/Region": "Virginia",
+    "Country": "USA",
+    "Installation Type": "Marine Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Marine Corps Base Hawaii",
+    "City": "Kaneohe",
+    "State/Region": "Hawaii",
+    "Country": "USA",
+    "Installation Type": "Marine Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "MCAS Miramar",
+    "City": "San Diego",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Marine Air Station"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "MCAS Cherry Point",
+    "City": "Havelock",
+    "State/Region": "North Carolina",
+    "Country": "USA",
+    "Installation Type": "Marine Air Station"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "MCAS Yuma",
+    "City": "Yuma",
+    "State/Region": "Arizona",
+    "Country": "USA",
+    "Installation Type": "Marine Air Station"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "MCAS Beaufort",
+    "City": "Beaufort",
+    "State/Region": "South Carolina",
+    "Country": "USA",
+    "Installation Type": "Marine Air Station"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "MCAS New River",
+    "City": "Jacksonville",
+    "State/Region": "North Carolina",
+    "Country": "USA",
+    "Installation Type": "Marine Air Station"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Twentynine Palms",
+    "City": "Twentynine Palms",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Marine Training Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Station Norfolk",
+    "City": "Norfolk",
+    "State/Region": "Virginia",
+    "Country": "USA",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Base San Diego",
+    "City": "San Diego",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Base Kitsap",
+    "City": "Bremerton / Silverdale",
+    "State/Region": "Washington",
+    "Country": "USA",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Base Coronado",
+    "City": "Coronado",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "NAS Jacksonville",
+    "City": "Jacksonville",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Naval Air Station"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "NAS Pensacola",
+    "City": "Pensacola",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Naval Air Station"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "NAS Oceana",
+    "City": "Virginia Beach",
+    "State/Region": "Virginia",
+    "Country": "USA",
+    "Installation Type": "Naval Air Station"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "NAS Whidbey Island",
+    "City": "Oak Harbor",
+    "State/Region": "Washington",
+    "Country": "USA",
+    "Installation Type": "Naval Air Station"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "NAS Lemoore",
+    "City": "Lemoore",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Naval Air Station"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Station Mayport",
+    "City": "Jacksonville",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Base Point Loma",
+    "City": "San Diego",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Base Guam",
+    "City": "Santa Rita-Sumai",
+    "State/Region": "Guam",
+    "Country": "USA Territory",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Submarine Base Kings Bay",
+    "City": "St. Marys",
+    "State/Region": "Georgia",
+    "Country": "USA",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Submarine Base New London",
+    "City": "Groton",
+    "State/Region": "Connecticut",
+    "Country": "USA",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Joint Base Andrews",
+    "City": "Camp Springs",
+    "State/Region": "Maryland",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Joint Base Langley?Eustis",
+    "City": "Hampton / Newport News",
+    "State/Region": "Virginia",
+    "Country": "USA",
+    "Installation Type": "Joint Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Joint Base McGuire?Dix?Lakehurst",
+    "City": "Wrightstown / Lakehurst",
+    "State/Region": "New Jersey",
+    "Country": "USA",
+    "Installation Type": "Joint Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Joint Base Lewis?McChord",
+    "City": "Tacoma / Lakewood",
+    "State/Region": "Washington",
+    "Country": "USA",
+    "Installation Type": "Joint Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Joint Base Elmendorf?Richardson",
+    "City": "Anchorage",
+    "State/Region": "Alaska",
+    "Country": "USA",
+    "Installation Type": "Joint Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Lackland AFB",
+    "City": "San Antonio",
+    "State/Region": "Texas",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Randolph AFB",
+    "City": "Universal City",
+    "State/Region": "Texas",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Sheppard AFB",
+    "City": "Wichita Falls",
+    "State/Region": "Texas",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Goodfellow AFB",
+    "City": "San Angelo",
+    "State/Region": "Texas",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Dyess AFB",
+    "City": "Abilene",
+    "State/Region": "Texas",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Laughlin AFB",
+    "City": "Del Rio",
+    "State/Region": "Texas",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Travis AFB",
+    "City": "Fairfield",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Edwards AFB",
+    "City": "Lancaster / Rosamond",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Beale AFB",
+    "City": "Marysville",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Hill AFB",
+    "City": "Ogden / Layton",
+    "State/Region": "Utah",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Nellis AFB",
+    "City": "Las Vegas",
+    "State/Region": "Nevada",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Creech AFB",
+    "City": "Indian Springs",
+    "State/Region": "Nevada",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Luke AFB",
+    "City": "Glendale",
+    "State/Region": "Arizona",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Davis?Monthan AFB",
+    "City": "Tucson",
+    "State/Region": "Arizona",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Kirtland AFB",
+    "City": "Albuquerque",
+    "State/Region": "New Mexico",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Cannon AFB",
+    "City": "Clovis",
+    "State/Region": "New Mexico",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Holloman AFB",
+    "City": "Alamogordo",
+    "State/Region": "New Mexico",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Barksdale AFB",
+    "City": "Bossier City",
+    "State/Region": "Louisiana",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Eglin AFB",
+    "City": "Valparaiso / Niceville",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Hurlburt Field",
+    "City": "Mary Esther / Fort Walton Beach",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Tyndall AFB",
+    "City": "Panama City",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "MacDill AFB",
+    "City": "Tampa",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Moody AFB",
+    "City": "Valdosta",
+    "State/Region": "Georgia",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Robins AFB",
+    "City": "Warner Robins",
+    "State/Region": "Georgia",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Seymour Johnson AFB",
+    "City": "Goldsboro",
+    "State/Region": "North Carolina",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Shaw AFB",
+    "City": "Sumter",
+    "State/Region": "South Carolina",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Charleston AFB",
+    "City": "North Charleston",
+    "State/Region": "South Carolina",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Dover AFB",
+    "City": "Dover",
+    "State/Region": "Delaware",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Wright?Patterson AFB",
+    "City": "Dayton / Fairborn",
+    "State/Region": "Ohio",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Minot AFB",
+    "City": "Minot",
+    "State/Region": "North Dakota",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Grand Forks AFB",
+    "City": "Grand Forks",
+    "State/Region": "North Dakota",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Offutt AFB",
+    "City": "Bellevue",
+    "State/Region": "Nebraska",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Malmstrom AFB",
+    "City": "Great Falls",
+    "State/Region": "Montana",
+    "Country": "USA",
+    "Installation Type": "Air Force Base"
+  },
+  {
+    "Branch": "Space Force",
+    "Installation Name": "Buckley Space Force Base",
+    "City": "Aurora",
+    "State/Region": "Colorado",
+    "Country": "USA",
+    "Installation Type": "Space Force Base"
+  },
+  {
+    "Branch": "Space Force",
+    "Installation Name": "Peterson Space Force Base",
+    "City": "Colorado Springs",
+    "State/Region": "Colorado",
+    "Country": "USA",
+    "Installation Type": "Space Force Base"
+  },
+  {
+    "Branch": "Space Force",
+    "Installation Name": "Schriever Space Force Base",
+    "City": "Colorado Springs",
+    "State/Region": "Colorado",
+    "Country": "USA",
+    "Installation Type": "Space Force Base"
+  },
+  {
+    "Branch": "Space Force",
+    "Installation Name": "Patrick Space Force Base",
+    "City": "Satellite Beach / Cocoa Beach",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Space Force Base"
+  },
+  {
+    "Branch": "Space Force",
+    "Installation Name": "Cape Canaveral Space Force Station",
+    "City": "Cape Canaveral",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Space Force Base"
+  },
+  {
+    "Branch": "Space Force",
+    "Installation Name": "Clear Space Force Station",
+    "City": "Anderson",
+    "State/Region": "Alaska",
+    "Country": "USA",
+    "Installation Type": "Space Force Base"
+  },
+  {
+    "Branch": "Coast Guard",
+    "Installation Name": "CG Base Alameda",
+    "City": "Alameda",
+    "State/Region": "California",
+    "Country": "USA",
+    "Installation Type": "Coast Guard Base"
+  },
+  {
+    "Branch": "Coast Guard",
+    "Installation Name": "CG Base Boston",
+    "City": "Boston",
+    "State/Region": "Massachusetts",
+    "Country": "USA",
+    "Installation Type": "Coast Guard Base"
+  },
+  {
+    "Branch": "Coast Guard",
+    "Installation Name": "CG Base Miami Beach",
+    "City": "Miami Beach",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Coast Guard Base"
+  },
+  {
+    "Branch": "Coast Guard",
+    "Installation Name": "CG Base Kodiak",
+    "City": "Kodiak",
+    "State/Region": "Alaska",
+    "Country": "USA",
+    "Installation Type": "Coast Guard Base"
+  },
+  {
+    "Branch": "Coast Guard",
+    "Installation Name": "CG Air Station Clearwater",
+    "City": "Clearwater",
+    "State/Region": "Florida",
+    "Country": "USA",
+    "Installation Type": "Air Station"
+  },
+  {
+    "Branch": "Coast Guard",
+    "Installation Name": "CG Air Station Elizabeth City",
+    "City": "Elizabeth City",
+    "State/Region": "North Carolina",
+    "Country": "USA",
+    "Installation Type": "Air Station"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Ramstein Air Base",
+    "City": "Ramstein-Miesenbach / Kaiserslautern",
+    "State/Region": "Rheinland-Pfalz",
+    "Country": "Germany",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Spangdahlem Air Base",
+    "City": "Spangdahlem",
+    "State/Region": "Rheinland-Pfalz",
+    "Country": "Germany",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Grafenwoehr Training Area",
+    "City": "Grafenw�hr",
+    "State/Region": "Bavaria",
+    "Country": "Germany",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Rose Barracks Vilseck",
+    "City": "Vilseck",
+    "State/Region": "Bavaria",
+    "Country": "Germany",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "USAG Wiesbaden",
+    "City": "Wiesbaden",
+    "State/Region": "Hesse",
+    "Country": "Germany",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "USAG Stuttgart",
+    "City": "Stuttgart",
+    "State/Region": "Baden-W�rttemberg",
+    "Country": "Germany",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Landstuhl Regional Medical Center",
+    "City": "Landstuhl",
+    "State/Region": "Rheinland-Pfalz",
+    "Country": "Germany",
+    "Installation Type": "Army Hospital"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "RAF Lakenheath",
+    "City": "Lakenheath",
+    "State/Region": "England",
+    "Country": "United Kingdom",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "RAF Mildenhall",
+    "City": "Mildenhall",
+    "State/Region": "England",
+    "Country": "United Kingdom",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "RAF Croughton",
+    "City": "Croughton",
+    "State/Region": "England",
+    "Country": "United Kingdom",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "RAF Alconbury",
+    "City": "Huntingdon",
+    "State/Region": "England",
+    "Country": "United Kingdom",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "RAF Menwith Hill",
+    "City": "Harrogate",
+    "State/Region": "England",
+    "Country": "United Kingdom",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Air Station Sigonella",
+    "City": "Catania",
+    "State/Region": "Sicily",
+    "Country": "Italy",
+    "Installation Type": "Naval Air Station"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Aviano Air Base",
+    "City": "Aviano",
+    "State/Region": "Friuli-Venezia Giulia",
+    "Country": "Italy",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Support Activity Naples",
+    "City": "Naples / Gricignano di Aversa",
+    "State/Region": "Naples",
+    "Country": "Italy",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Yokota Air Base",
+    "City": "Fussa",
+    "State/Region": "Tokyo",
+    "Country": "Japan",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Kadena Air Base",
+    "City": "Kadena / Chatan / Okinawa City",
+    "State/Region": "Okinawa",
+    "Country": "Japan",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "MCAS Iwakuni",
+    "City": "Iwakuni",
+    "State/Region": "Yamaguchi",
+    "Country": "Japan",
+    "Installation Type": "Marine Air Station"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Base Yokosuka",
+    "City": "Yokosuka",
+    "State/Region": "Kanagawa",
+    "Country": "Japan",
+    "Installation Type": "Naval Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Naval Air Facility Atsugi",
+    "City": "Ayase / Yamato",
+    "State/Region": "Kanagawa",
+    "Country": "Japan",
+    "Installation Type": "Naval Air Station"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Camp Foster",
+    "City": "Chatan / Ginowan",
+    "State/Region": "Okinawa",
+    "Country": "Japan",
+    "Installation Type": "Marine Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Camp Butler",
+    "City": "Multiple locations, Okinawa",
+    "State/Region": "Okinawa",
+    "Country": "Japan",
+    "Installation Type": "Marine Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Camp Kinser",
+    "City": "Urasoe",
+    "State/Region": "Okinawa",
+    "Country": "Japan",
+    "Installation Type": "Marine Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Camp Schwab",
+    "City": "Nago",
+    "State/Region": "Okinawa",
+    "Country": "Japan",
+    "Installation Type": "Marine Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Camp Humphreys",
+    "City": "Pyeongtaek",
+    "State/Region": "Pyeongtaek",
+    "Country": "South Korea",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Air Force",
+    "Installation Name": "Osan Air Base",
+    "City": "Pyeongtaek (Songtan)",
+    "State/Region": "Pyeongtaek",
+    "Country": "South Korea",
+    "Installation Type": "Air Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Camp Casey",
+    "City": "Dongducheon",
+    "State/Region": "Dongducheon",
+    "Country": "South Korea",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Army",
+    "Installation Name": "Camp Walker",
+    "City": "Daegu",
+    "State/Region": "Daegu",
+    "Country": "South Korea",
+    "Installation Type": "Army Base"
+  },
+  {
+    "Branch": "Navy",
+    "Installation Name": "Joint Base Pearl Harbor-Hickam",
+    "City": "Honolulu",
+    "State/Region": "Hawaii",
+    "Country": "USA",
+    "Installation Type": "Joint Base"
+  },
+  {
+    "Branch": "Marine Corps",
+    "Installation Name": "Marine Corps Base Hawaii",
+    "City": "Kaneohe",
+    "State/Region": "Hawaii",
+    "Country": "USA",
+    "Installation Type": "Marine Base"
+  }
+]
